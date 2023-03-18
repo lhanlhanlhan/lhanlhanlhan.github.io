@@ -1,0 +1,106 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  padding-top: $margin-m-1;
+  margin-bottom: $margin-m-1;
+}
+blockquote {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: $margin-m-2;
+  padding: 1em;
+  border-left: 0.5em solid $color-text-third;
+}
+blockquote p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+blockquote blockquote {
+  margin-left: $margin-m-2;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.post-content ol {
+  margin: $margin-m-1 0;
+}
+.post-content ol ol {
+  margin-top: $margin-m-0;
+}
+.post-content ul {
+  margin: $margin-m-1 0;
+}
+.post-content ul ul {
+  margin-top: $margin-m-0;
+}
+.post-content ul li {
+  list-style-type: disc;
+  margin-top: $margin-m-0;
+}
+.post-content .task-list {
+  padding-left: 0;
+}
+.post-content .task-list .task-list-item {
+  list-style: none;
+}
+dl dt {
+  padding: $margin-m-0 0;
+}
+dl dt::after {
+  content: " :";
+}
+dl dd {
+  margin: 0;
+}
+figure.highlight .code,
+figure.highlight .gutter {
+  background: $color-code-background;
+  border: 3px solid $color-code-background;
+  padding: 0;
+}
+figure.highlight .gutter {
+  padding: 0 12px;
+}
+figure.highlight .code pre {
+  padding: 8px;
+  border: 3px solid transparent;
+}
+figure.highlight .code pre:focus {
+  border: 3px solid $color-text-primary;
+  outline: 3px solid $color-link-shader;
+}
+figure.highlight table,
+figure.highlight td,
+figure.highlight th {
+  border: none;
+}
+.post-content {
+  margin-top: $margin-l-1;
+}
+.post-info-col {
+  margin-top: $margin-l-1;
+}
+.post-hidden-info {
+  color: $color-text-secondary;
+  font-style: italic;
+}
+.after-post {
+  margin-top: $margin-primary;
+}
+.callout {
+  background: $color-primary;
+  padding: 1px 16px;
+  margin-bottom: 1em;
+}
+.callout .heading {
+  color: $color-text-white;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.callout .content {
+  color: $color-text-white;
+  margin-top: 8px;
+}

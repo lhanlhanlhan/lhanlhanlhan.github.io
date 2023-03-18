@@ -1,0 +1,66 @@
+.browse-page-col {
+  margin: 16px 0;
+}
+.browse-page-col .browse-restr-pane {
+  margin-top: 16px;
+}
+.browse-page-col .browse-restr-pane .heading {
+  background-color: $color-block-background-deeper;
+  padding: 12px 16px;
+}
+.browse-page-col .browse-restr-pane .heading.active {
+  background-color: $color-primary;
+  color: $color-text-white;
+}
+.browse-page-col .heading {
+  font-weight: bold;
+}
+.browse-page-col>.heading {
+  margin: 10px 0;
+}
+.browse-page-col .desc {
+  margin-top: 16px;
+}
+.browse-page-col .desc {
+  color: $color-text-secondary;
+}
+.browse-restr .browse-tags .item + .item:before {
+  content: "·";
+  margin: 0 4px;
+}
+.browse-restr .browse-restrs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.browse-restr .browse-restrs .item {
+  margin: 8px;
+  padding: 4px 8px;
+  padding-right: 30px;
+  position: relative;
+  display: block;
+}
+.browse-restr .browse-restrs .item:not(.hp-link-disabled) {
+  color: $color-text-primary;
+}
+.browse-restr .browse-restrs .item:not(.hp-link-disabled):focus {
+  border: 2px solid $color-link-shader;
+}
+.browse-restr .browse-restrs .item:not(:hover) {
+  text-decoration: none;
+}
+.browse-restr .browse-restrs .item:not(:focus) {
+  border: 2px solid $color-text-secondary;
+}
+.browse-restr .browse-restrs .item:after {
+  content: "✕";
+  position: absolute;
+  top: 4px;
+  right: 8px;
+}
+.browse-restr .browse-restrs .item:not(:last-child) {
+  margin-right: 8px;
+}
+.browse-restr-item-list .browse-restr-item-list-item {
+  margin-bottom: 6px;
+}

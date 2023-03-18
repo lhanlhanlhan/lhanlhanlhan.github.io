@@ -1,0 +1,29 @@
+.post-list-item {
+  padding-top: $margin-m-1;
+  align-items: top;
+}
+.post-list-item:not(:first-child) {
+  border-top: 1px solid $color-text-third;
+}
+.post-list-item .post-excerpt,
+.post-list-item .post-date {
+  font-size: 0.88em;
+  margin: 2px 0;
+}
+.post-list-item .post-date {
+  color: $color-text-secondary;
+  margin-bottom: 16px;
+}
+@media (max-width: 480px) {
+  .post-list-item {
+    flex-wrap: wrap;
+  }
+  .post-list-item .post-title {
+    width: 100%;
+  }
+  .post-list-item .post-date {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+  }
+}

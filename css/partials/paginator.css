@@ -1,0 +1,109 @@
+.paginator {
+  margin-top: $margin-l-1;
+  padding-top: $margin-m-1;
+  border-top: 1px solid $color-text-third;
+}
+.hp-pagination {
+  display: flex;
+  flex-wrap: wrap;
+}
+@media (max-width: 570px) {
+  .hp-pagination .prev,
+  .hp-pagination .next {
+    width: 100%;
+    margin: 4px 0;
+  }
+}
+.hp-pagination .prev,
+.hp-pagination .next,
+.hp-pagination .page-number,
+.hp-pagination .space {
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  position: relative;
+  min-width: 45px;
+  min-height: 45px;
+  padding: 10px 15px;
+  float: left;
+}
+.hp-pagination .prev:after,
+.hp-pagination .next:after,
+.hp-pagination .page-number:after,
+.hp-pagination .space:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.hp-pagination a.prev:hover:not(:focus):not(.current),
+.hp-pagination a.next:hover:not(:focus):not(.current),
+.hp-pagination a.page-number:hover:not(:focus):not(.current) {
+  background-color: $color-code-background;
+}
+.hp-pagination span.prev,
+.hp-pagination span.next {
+  font-weight: 400;
+  color: $color-text-secondary;
+}
+.hp-pagination .page-number,
+.hp-pagination .space {
+  text-align: center;
+  font-weight: 400;
+}
+.hp-pagination .page-number.current,
+.hp-pagination .space.current {
+  font-weight: 700;
+  background-color: $color-primary;
+  color: $color-text-white;
+}
+.hp-pagination .prev:before,
+.hp-pagination .next:before {
+  border-left: 3px solid $color-link;
+  border-top: 3px solid $color-link;
+  content: "";
+  display: block;
+  height: 10px;
+  width: 10px;
+  position: absolute;
+}
+.hp-pagination .prev:visited:before,
+.hp-pagination .next:visited:before {
+  border-left: 3px solid $color-link-visited;
+  border-top: 3px solid $color-link-visited;
+}
+.hp-pagination .prev:hover:before,
+.hp-pagination .next:hover:before {
+  border-left: 3px solid $color-link-hovered;
+  border-top: 3px solid $color-link-hovered;
+}
+.hp-pagination .prev:focus:before,
+.hp-pagination .next:focus:before {
+  border-left: 3px solid $color-text-primary;
+  border-top: 3px solid $color-text-primary;
+}
+.hp-pagination .prev {
+  padding-left: 24px;
+}
+.hp-pagination .prev:before {
+  left: 2px;
+  top: 17px;
+  -webkit-transform: translateY(0) rotate(-45deg) scale(1);
+  -ms-transform: translateY(0) rotate(-45deg) scale(1);
+  transform: translateY(0) rotate(-45deg) scale(1);
+}
+.hp-pagination .next {
+  padding-right: 24px;
+  text-align: right;
+}
+.hp-pagination .next:before {
+  right: 2px;
+  top: 17px;
+  -webkit-transform: translateY(0) rotate(135deg) scale(1);
+  -ms-transform: translateY(0) rotate(135deg) scale(1);
+  transform: translateY(0) rotate(135deg) scale(1);
+}

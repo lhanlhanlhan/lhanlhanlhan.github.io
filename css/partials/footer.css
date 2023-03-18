@@ -1,0 +1,23 @@
+.wrapper>.footer {
+  margin-top: $margin-primary;
+  background-color: $color-code-background;
+  border-top: $line-primary $color-text-third solid;
+}
+.wrapper>.footer .footer-text {
+  margin-top: $margin-l-1;
+  margin-bottom: $margin-primary;
+}
+.wrapper>.footer .footer-text .logo img {
+  height: 32px;
+  width: auto;
+  display: inline;
+  margin-left: $margin-m-1;
+}
+.wrapper>.footer .footer-text .logo .the-han-li-logo {
+  font-size: 40px;
+  line-height: 40px;
+}
+.wrapper>.footer .footer-text .copyright {
+  margin-top: $margin-m-2;
+  max-width: 760px;
+}

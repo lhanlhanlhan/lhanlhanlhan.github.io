@@ -1,0 +1,96 @@
+@font-face {
+  font-family: "HanLiSymbols";
+  src: url("../fonts/hanli/HanLiSymbols.woff2");
+}
+div {
+  padding: 0;
+  margin: 0;
+}
+ul {
+  list-style: "—  ";
+  padding: 0;
+  margin: 0;
+  padding-inline-start: 28px;
+}
+ul ul {
+  margin: 0;
+}
+ul ::marker,
+ol ::marker {
+  color: $color-g3;
+}
+ol {
+  list-style: "—  ";
+  padding: 0;
+  margin: 0;
+  padding-inline-start: 28px;
+}
+ol ol {
+  margin: 0;
+}
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+img {
+  display: block;
+}
+.the-han-li-logo::before {
+  font-size: 1.2em;
+  font-family: "HanLiSymbols";
+  content: "0";
+}
+a {
+  font-weight: $font-weight-medium;
+  color: $color-link;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.1em;
+}
+a:visited {
+  color: $color-link-visited;
+}
+a:hover {
+  color: $color-link-hovered;
+  text-decoration-thickness: 3px;
+  -webkit-text-decoration-skip-ink: none;
+  text-decoration-skip-ink: none;
+  -webkit-text-decoration-skip: none;
+  text-decoration-skip: none;
+}
+a:focus:not(.hp-a-no-shader) {
+  color: $color-text-black;
+  outline: 3px solid transparent;
+  background-color: $color-link-shader;
+  -webkit-box-shadow: 0 -2px $color-link-shader, 0 4px $color-text-black;
+  box-shadow: 0 -2px $color-link-shader, 0 4px $color-text-black;
+  text-decoration: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+a:focus:not(.hp-a-no-shader)>img {
+  box-shadow: 0 0 0 3px $color-link-shader, 0 0 0 6px $color-text-black;
+}
+body {
+  background-color: $color-background;
+}
+/* clears the 'X' from Internet Explorer */
+input[type=search]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+input[type=search]::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+/* clears the 'X' from Chrome */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  display: none;
+}

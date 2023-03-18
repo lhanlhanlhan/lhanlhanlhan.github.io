@@ -1,0 +1,47 @@
+.the-han-li-logo::before {
+  font-size: 1.2em;
+  font-family: "HanLiSymbols";
+  content: "0";
+}
+a {
+  font-weight: $font-weight-medium;
+  color: $color-link;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.1em;
+}
+a:visited {
+  color: $color-link-visited;
+}
+a:hover {
+  color: $color-link-hovered;
+  text-decoration-thickness: 3px;
+  -webkit-text-decoration-skip-ink: none;
+  text-decoration-skip-ink: none;
+  -webkit-text-decoration-skip: none;
+  text-decoration-skip: none;
+}
+a:not(.hp-a-no-shader):focus {
+  color: $color-text-black;
+  outline: 3px solid transparent;
+  background-color: $color-link-shader;
+  -webkit-box-shadow: 0 -2px $color-link-shader, 0 4px $color-text-black;
+  box-shadow: 0 -2px $color-link-shader, 0 4px $color-text-black;
+  text-decoration: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+a:not(.hp-a-no-shader):focus>img {
+  box-shadow: 0 0 0 3px $color-link-shader, 0 0 0 6px $color-text-black;
+}
+.kvpair .key {
+  font-weight: bold;
+}
+.mt-half {
+  margin-top: 0.5em;
+}
+.mt-1 {
+  margin-top: 1em;
+}
