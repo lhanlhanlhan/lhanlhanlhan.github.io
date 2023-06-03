@@ -83,6 +83,15 @@ figure.highlight td,
 figure.highlight th {
   border: none;
 }
+.figcaption {
+  display: block;
+  margin-top: 0.5rem;
+  color: $color-text-secondary;
+  font-style: italic;
+}
+mjx-container[jax="SVG"]>svg {
+  max-width: 100%;
+}
 .post-content {
   margin-top: $margin-l-1;
 }

@@ -1211,6 +1211,15 @@ figure.highlight td,
 figure.highlight th {
   border: none;
 }
+.figcaption {
+  display: block;
+  margin-top: 0.5rem;
+  color: #666;
+  font-style: italic;
+}
+mjx-container[jax="SVG"]>svg {
+  max-width: 100%;
+}
 .post-content {
   margin-top: 2rem;
 }
