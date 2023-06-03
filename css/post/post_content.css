@@ -12,12 +12,13 @@ blockquote {
   margin-left: 0;
   margin-right: 0;
   margin-top: $margin-m-2;
-  padding: 1em;
+  padding: 0.5em 1em;
   border-left: 0.5em solid $color-text-third;
 }
 blockquote p {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 0.5em;
+  margin-bottom: 0.5rem;
+  color: $color-text-secondary;
 }
 blockquote blockquote {
   margin-left: $margin-m-2;
@@ -39,6 +40,11 @@ blockquote blockquote {
 .post-content ul li {
   list-style-type: disc;
   margin-top: $margin-m-0;
+  padding-left: 0.4em;
+}
+.post-content ul li p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 .post-content .task-list {
   padding-left: 0;

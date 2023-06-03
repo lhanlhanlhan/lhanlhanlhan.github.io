@@ -251,7 +251,7 @@ ul {
   list-style: "—  ";
   padding: 0;
   margin: 0;
-  padding-inline-start: 28px;
+  padding-inline-start: 1.5em;
 }
 ul ul {
   margin: 0;
@@ -261,10 +261,9 @@ ol ::marker {
   color: #abacad;
 }
 ol {
-  list-style: "—  ";
   padding: 0;
   margin: 0;
-  padding-inline-start: 28px;
+  padding-inline-start: 1.5em;
 }
 ol ol {
   margin: 0;
@@ -1130,12 +1129,13 @@ blockquote {
   margin-left: 0;
   margin-right: 0;
   margin-top: 1rem;
-  padding: 1em;
+  padding: 0.5em 1em;
   border-left: 0.5em solid #e8e8e8;
 }
 blockquote p {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 0.5em;
+  margin-bottom: 0.5rem;
+  color: #666;
 }
 blockquote blockquote {
   margin-left: 1rem;
@@ -1164,6 +1164,11 @@ blockquote blockquote {
 .post-content ul li {
   list-style-type: disc;
   margin-top: 0.5rem;
+  padding-left: 0.4em;
+}
+.post-content ul li p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 .post-content .task-list {
   padding-left: 0;

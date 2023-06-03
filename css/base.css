@@ -10,7 +10,7 @@ ul {
   list-style: "—  ";
   padding: 0;
   margin: 0;
-  padding-inline-start: 28px;
+  padding-inline-start: 1.5em;
 }
 ul ul {
   margin: 0;
@@ -20,10 +20,9 @@ ol ::marker {
   color: $color-g3;
 }
 ol {
-  list-style: "—  ";
   padding: 0;
   margin: 0;
-  padding-inline-start: 28px;
+  padding-inline-start: 1.5em;
 }
 ol ol {
   margin: 0;

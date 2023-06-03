@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>归一化 (Standardisation)、标准化 (Normalisation) 的区别 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/search.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        Menu
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+            
+              <li class="menu-item">
+                <a href="/">Home</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">Browse</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">About</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          <article id="post">
+  
+    <div class="post-head">
+  <div class="hp-grid-row">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            Technical
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          归一化 (Standardisation)、标准化 (Normalisation) 的区别
+        
+      </div>
+      
+        <div class="post-excerpt">
+          归一化将保留原始数据分布，而标准化将数据变换为均值为 0、标准差为1  的某一分布。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2021-09-25
+        11:00, 福建厦门
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <p>本文摘抄自两篇文章：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_36604953/article/details/102652160">标准化和归一化，请勿混为一谈，透彻理解数据变换_夏洛克江户川的博客-CSDN博客</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/20467170/answer/839255695">知乎答主「本空」的回答</a></p>
+</li>
+</ul>
+<p>通常， 归一化、标准化都是特征工程中的特征缩放过程，但它们作用的目的和结果有差异：归一化将保留原始数据分布，而标准化将数据变换为均值为 0，标准差为 1 的某一分布。</p>
+<p><strong>特征缩放</strong> 一般的目的：</p>
+<ul>
+<li><p>使不同量纲的特征处于同一数值量级，减少方差大的特征的影响，使模型更准确。</p>
+</li>
+<li><p>加快学习算法的收敛速度。</p>
+</li>
+</ul>
+<p><strong>归一化、标准化</strong> 的区别：</p>
+<ul>
+<li><p>标准化 (Standardisation)：将数据变换为【均值为0，标准差为1的 分布】，但并非一定是正态分布。</p>
+</li>
+<li><p>归一化 (Normalisation)：【保留原始数据分布】，并将一列数据变化到某个固定区间 (范围) 中，通常，这个区间是 [0, 1，广义的讲，也可以是各种区间，比如映射到 [0, 1] 一样可以继续映射到其他范围，图像中可能会映射到 [0,255]，其他情况也可能映射到 [-1,1]；</p>
+</li>
+</ul>
+<p>在 scilearn-kit 中，有 4 种基本的归一化、标准化方法：</p>
+<ol>
+<li><p>缩放到均值为0，方差为1（Standardization——StandardScaler()）</p>
+</li>
+<li><p>缩放到0和1之间（Standardization——MinMaxScaler()）</p>
+</li>
+<li><p>缩放到-1和1之间（Standardization——MaxAbsScaler()）</p>
+</li>
+<li><p>缩放到0和1之间，保留原始数据的分布（Normalization——Normalizer()）</p>
+</li>
+</ol>
+
+
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">Tags</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/ML/">ML</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">Related posts</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/16/%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E4%B8%8E%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6/" class="post-title">
+                          
+                            余弦相似度与欧几里德相似度差异
+                          
+                        </a>
+                        <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/06/03/%E5%A4%9A%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E5%87%A0%E5%A4%A7%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87%E7%9A%84%E7%AE%97%E4%BE%8B/" class="post-title">
+                          
+                            多分类模型几大评估指标的算例
+                          
+                        </a>
+                        <p class="post-date">2023-06-03</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0%E7%9A%84%E3%80%8C%E5%8D%95%E5%90%91-%E5%8F%8C%E5%90%91%E9%A5%B1%E5%92%8C%E3%80%8D%E5%8F%8A%E5%85%B6%E5%BD%B1%E5%93%8D/" class="post-title">
+                          
+                            激活函数的「单向/双向饱和」及其影响
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+
+    <div class="post-footer">
+  <div class="post-footer">
+    <div class="hp-pane">
+  <!-- TODO -->
+</div>
+  </div>
+</div>
+
+    
+      <div class="post-comment">
+
+     
+
+     
+    
+    
+
+</div>
+     
+  
+</article>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        All content of this website is available under the
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>Creative Commons Attribution 4.0 International license</a>
+(CC-BY International v4.0), except where otherwise stated.
+
+        <a href="/about/copyright">Learn more...</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
