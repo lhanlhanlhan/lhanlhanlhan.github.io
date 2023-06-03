@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>D-Bus &amp; QtDBus | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/search.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        Menu
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+            
+              <li class="menu-item">
+                <a href="/">Home</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">Browse</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">About</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          <article id="post">
+  
+    <div class="post-head">
+  <div class="hp-grid-row">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            Technical
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          D-Bus &amp; QtDBus
+        
+      </div>
+      
+        <div class="post-excerpt">
+          本文介绍了 D-Bus 的组成、基本概念，以及提供了一个使用 Qt 套件来实现 D-Bus 跨进程通讯的例子。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-08-11
+        01:02, 北京海淀
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <div class='callout'><p class='heading'>概述</p><p class='content'>
+D-Bus 是 GNU/Linux 系统中的一种跨进程通讯（IPC）机制。本文介绍了 D-Bus 的组成、基本概念，以及提供了一个使用 Qt 套件来实现 D-Bus 跨进程通讯的例子。
+</p></div>
+
+<blockquote>
+<p>D-BUS is a <u><strong>message bus system</strong></u>, a simple way for applications to talk to one another.</p>
+<p><u><strong>The low-level </strong></u> <u><strong>API</strong></u> <u><strong> for </strong></u> <u><strong>DBUS</strong></u> <u><strong> is written in C</strong></u> but most of the documentation and code is written for a higher level binding, such as Python or GLib. [<a target="_blank" rel="noopener" href="http://www.matthew.ath.cx/misc/dbus">Ref</a>]</p>
+<p>D-Bus is an Inter-Process Communication (IPC) and Remote Procedure Calling (RPC) mechanism originally developed for Linux to <u><strong>replace existing and competing IPC solutions with one unified protocol</strong></u>. It has also been designed to allow <u><strong>communication between system-level processes (such as printer and hardware driver services) and normal user processes</strong></u>. [<a target="_blank" rel="noopener" href="https://doc.qt.io/qt-6/qtdbus-index.html">Qt 定义</a>]</p>
+</blockquote>
+<h1 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h1><p>D-Bus 是一个 Linux 进程间通讯的统一接口套件。常用来进行 <strong>系统进程 – 用户进程</strong> 交互。</p>
+<p>使用 D-Bus 进行 IPC，通常是通过一个总线（Bus）进行的，但是进程 – 进程单点通讯也可以实现。</p>
+<h1 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h1><p>基于 libdbus 的 D-BUS 套件系统包括：</p>
+<ul>
+<li><p>函数库 libdbus ，用于两个应用程序互相联系和交互消息。</p>
+</li>
+<li><p>一个基于 libdbus 构造的消息总线守护进程 (dbus-daemon)，可同时与多个应用程序相连，并能把来自一个应用程序的消息路由到0或者多个其他程序。</p>
+</li>
+</ul>
+<p>libdbus 实现了一套进程间通讯方案，是一套 D-Bus 机制的实现库。在内核态，libdbus 通过系统提供的底层 IPC 方案（例如 Unix Domain Socket 甚至 TCP）来充当底层的进程间通讯的信道。在类 Unix 系统中，libdbus 默认利用 Unix Domain Socket 来通讯；在 Windows 系统中，libdbus 默认利用 Nonce-TCP 通讯。通讯方式也可以指定，例如使用 systemd 或 macOS 上的 launchd 来充当信道也是可以的。[<a target="_blank" rel="noopener" href="https://dbus.freedesktop.org/doc/dbus-specification.html#transports">Ref</a>]</p>
+<p>freedesktop D-Bus 套件中的 dbus-daemon 是基于 libdbus 实现的抽象总线。应用程序可以通过 dbus-daemon 来实现点对点和广播等通讯。</p>
+<p>基于 libdbus 的高层封装包括 QtDBus、Java 中的 org.freedesktop.dbus 包等。现代应用程序在基于 D-Bus 的开发实践中，通常使用更高层的 D-Bus 封装，而不直接使用 libdbus 这样偏底层的 D-Bus 实现（官方也不推荐这么做）。</p>
+<p><img src="/2022/08/11/D-Bus-QtDBus/uml-dbus.svg" alt="D-Bus stack"></p>
+<p>libdbus（以及它的高层封装 QtDBus 等）可以使应用程序连接到另一个程序【上图中的红线】，或者使应用程序连接到 dbus-daemon 并通过它连接到另一个程序【上图中的白线】，而后者使用的更为广泛。</p>
+<h1 id="dbus-daemon"><a href="#dbus-daemon" class="headerlink" title="dbus-daemon"></a>dbus-daemon</h1><p>通常情况下，单个用户的 Linux 会至少启动了两个 dbus-daemon 进程，一个属于 system，一个属于 session。后者在用户登录的时候由 dbus-launch 启动。</p>
+<p>大多数普通程序都是使用 session 的 dbus-daemon。</p>
+<p>dbus-daemon 是有地址的，环境变量 <code>DBUS_SESSION_BUS_ADDRESS</code> 用于表示当前登录用户的 session 的 dbus-daemon 进程的地址。</p>
+<p>事实上，使用系统自启动的 dbus-daemon 是可以的。但是系统自启动的 dbus-daemon 的输出被重定向其他地方去了，很难调试；某些时候，单独启动一个 dbus-daemon 比较方便。</p>
+<h1 id="底层概念"><a href="#底层概念" class="headerlink" title="底层概念"></a>底层概念</h1><h2 id="Bus"><a href="#Bus" class="headerlink" title="Bus"></a>Bus</h2><p>在 D-Bus 中，总线 (bus) 是核心的概念：不同的程序可以 <strong>通过总线</strong> 进行某些操作，比如 <strong>方法调用</strong>、<strong>发送信号</strong> 和 <strong>监听特定的信号</strong>。</p>
+<p>总线的<strong>职责</strong>是：</p>
+<ul>
+<li><p>跟踪、维护连接在其上的应用程序；</p>
+</li>
+<li><p>负责消息从其起点到目的地的路由</p>
+</li>
+</ul>
+<p>总线通常有两种，系统总线 (system bus) 和会话总线 (session bus)，系统总线通常只有一条，用户总线在用户登录时创建。</p>
+<p>系统总线是一个持久的总线，在系统启动时就创建，供系统内核和后台进程使用，<strong>具有较高的安全性</strong>。<strong>系统总线最常用是发送系统消息</strong>，比如：<strong>插入一个新的存储设备、有新的网络连接</strong>等。</p>
+<p>会话总线是在某个用户登录后启动，属于某个用户私有，是某用户的应用程序用来通话的通道。在很多嵌入式系统中，只有一个用户 ID 登录运行，因此只有一个会话总线。</p>
+<p>dbus-daemon 就是 Bus。</p>
+<p><strong>虽然我们可以通过</strong> <strong>D-Bus</strong> <strong>实现点对点的进程间通讯，但是在业务中我们更倾向于使用中心化的 D-Bus，即利用 Bus （dbus-daemon）进行消息中转。</strong></p>
+<h2 id="Address（属于比较底层的概念）"><a href="#Address（属于比较底层的概念）" class="headerlink" title="Address（属于比较底层的概念）"></a>Address（属于比较底层的概念）</h2><p>D-Bus 系统符合 C&#x2F;S 结构。使用 D-Bus 的应用程序既可以是 C 端也可以是 S 端，S 端监听到来的连接，C 端连接到 S 端，一旦连接建立，消息就可以流转。</p>
+<p>如果使用 dbus-daemon，所有的应用程序都是 C 端，dbus-daemon 监听所有的连接，应用程序初始化时连接到 dbus-daemon。每一条 dbus-daemon 定义的总线都有一个地址，进程通过总线的地址连接到总线上。</p>
+<p><strong>一个</strong> <strong>D-Bus</strong> <strong>的地址是指 S 端用于监听、C 端将要连接的地方</strong>，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unix:path=/tmp/some-socket.socket</span><br></pre></td></tr></table></figure>
+
+<p>上述 D-Bus 地址表示的是 S 端将在位于路径 <code>some-socket.socket</code> 的 UNIX Domain Socket 监听，C 端将要连接到这个地址。</p>
+<p>除了 Unix Domain Socket，地址也可以是指定的 TCP&#x2F;IP Socket 或者其他在或者将在 D-Bus 协议中定义的传输方式。</p>
+<p>如果使用 dbus-daemon，libdbus 将通过读取环境变量 <code>DBUS_SESSION_BUS_ADDRESS</code> 自动获取session bus 的地址，或通过检查一个指定的 UNIX domain socket 路径获取 system bus 的地址。</p>
+<p>如果使用 D-Bus，但不使用 dbus-daemon，需要定义哪个应用是 S 端，哪个是 C 端，并定义一套机制用于认可 S 端的地址。</p>
+<h2 id="Connection-Name"><a href="#Connection-Name" class="headerlink" title="Connection Name"></a>Connection Name</h2><p>总线上的每个连接都有一个或多个名字。当连接建立以后，D-Bus 服务会分配一个不可改变的连接名，称为 <strong>唯一连接名</strong> (unique connection name)，唯一连接名即使在进程结束后也不会再被其他进程所使用。</p>
+<p>唯一连接名以冒号开头，如「:34-907」。但唯一连接名总是临时分配，无法确定，也难以记忆，因此应用可以要求有另外一个 <strong>容易记住的名字</strong> (well-known name) 来对应唯一连接名。通常使用反域名来标记，例如可以用 「com.mycompany」来映射「:34-907」。</p>
+<p>应用程序可能会要求拥有额外的 <strong>容易记住的名字</strong> (well-known name)。例如，可以写一个规范来定义一个名字叫做 com.mycompany.TextEditor。协议可以指定自己拥有名字为 com.mycompany.TextEditor 的连接，一个路径为&#x2F;com&#x2F;mycompany&#x2F;TextFileManager的对象，对象拥有接口org.freedesktop.FileHandler。</p>
+<p>应用程序就可以发送消息到总线上的连接名字、对象和接口以执行方法调用。</p>
+<p><strong>连接名可以用于跟踪应用程序的生命周期</strong>。当应用退出（或者崩溃）时，与总线的连接将被 OS 内核关掉，总线将会发送通知，告诉剩余的应用程序。</p>
+<h2 id="Object"><a href="#Object" class="headerlink" title="Object"></a>Object</h2><p>D-Bus 的对象由客户进程创建。当经由一个 D-Bus 连接收到一条消息时，<strong>消息是被发往一个对象</strong>而不是整个应用程序。</p>
+<h2 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h2><p>每一个对象支持一个或者多个接口，接口是一组方法和信号的集合，接口定义一个对象实体的类型。</p>
+<p>D-Bus 对接口的<strong>命名方式</strong>，类似 org.freedesktop.Introspectable （反域名）</p>
+<p>概念与 C++ 抽象类、Java Interface 类似。D-Bus 接口——</p>
+<ul>
+<li><p>定义了接口中的方法名、信号、属性</p>
+</li>
+<li><p>定义了当连接建立后双方的行为约定</p>
+</li>
+</ul>
+<h2 id="Message"><a href="#Message" class="headerlink" title="Message"></a>Message</h2><p>D-Bus 通信机制是通过进程间发送 <strong>消息</strong> 实现的。一般，消息用来传递远程过程的调用（calls），以及调用引发的返回值及错误（如有）。</p>
+<p>最基本的 D-Bus 协议是一对一的通信协议。</p>
+<p>与 Socket 通信不同，<strong>D-Bus</strong> <strong>是面向消息的协议</strong>。</p>
+<p>D-Bus 有 4 种消息类型：</p>
+<ul>
+<li><p>method_call</p>
+</li>
+<li><p>method_return</p>
+</li>
+<li><p>signal</p>
+</li>
+<li><p>error</p>
+</li>
+</ul>
+<h2 id="Service，Service-Name"><a href="#Service，Service-Name" class="headerlink" title="Service，Service Name"></a>Service，Service Name</h2><p>当在总线上通讯时，应用程序用 <u><strong>服务名</strong></u> 来向其他程序标识自己。</p>
+<p>就像一台电脑在网络上可以有多个 Hostname 一样，一个应用程序（对象）在总线上也可以暴露多个 服务（每个服务用一个服务名标识）。</p>
+<p>只有用总线来通讯时，才有必要使用服务名。假如使用点对点的 D-Bus 通讯，使用服务名是没有必要且不支持的。</p>
+<p>服务名一般用反域名来组织。</p>
+<h2 id="Qt-调用-D-Bus-接口的例子"><a href="#Qt-调用-D-Bus-接口的例子" class="headerlink" title="Qt 调用 D-Bus 接口的例子"></a>Qt 调用 D-Bus 接口的例子</h2><p>例如如果我们想调用 com.example.SomeService 服务在 &#x2F;com&#x2F;example&#x2F;SomeService 路径下，由 com.example.SomeInterface 提供的 DoSomething() 方法，用 Qt D-Bus 需要这样写：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> SERVICE_NAME <span class="string">&quot;com.example.SomeService&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> OBJECT_PATH <span class="string">&quot;/com/example/SomeService&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> INTERFACE <span class="string">&quot;com.example.SomeInterface&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// 1. 创建 Interface 的本地代理</span></span><br><span class="line"><span class="keyword">auto</span> interface = <span class="built_in">QDBusInterface</span>(SERVICE_NAME, OBJECT_PATH, INTERFACE,</span><br><span class="line">                                QDBusConnection::<span class="built_in">sessionBus</span>());</span><br><span class="line"></span><br><span class="line"><span class="comment">/// 2. 调用远端方法 (同步)</span></span><br><span class="line">QDBusMessage result = interface.<span class="built_in">call</span>(<span class="string">&quot;DoSomething&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h1 id="QtDBus-类型系统"><a href="#QtDBus-类型系统" class="headerlink" title="QtDBus 类型系统"></a>QtDBus 类型系统</h1><p>D-Bus 标准定义了一系列原生类型。QDBusArgument 支援这些原生类型，并将它们同 C++ 的类型进行对应。</p>
+<h2 id="Primitive-（原始类型）"><a href="#Primitive-（原始类型）" class="headerlink" title="Primitive （原始类型）"></a>Primitive （原始类型）</h2><table>
+<thead>
+<tr>
+<th>Qt 类型</th>
+<th>D-Bus 底层类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>uchar</td>
+<td>BYTE</td>
+</tr>
+<tr>
+<td>bool</td>
+<td>BOOLEAN</td>
+</tr>
+<tr>
+<td>short</td>
+<td>INT16</td>
+</tr>
+<tr>
+<td>ushort</td>
+<td>UINT16</td>
+</tr>
+<tr>
+<td>int</td>
+<td>INT32</td>
+</tr>
+<tr>
+<td>uint</td>
+<td>UINT32</td>
+</tr>
+<tr>
+<td>qlonglong</td>
+<td>INT64</td>
+</tr>
+<tr>
+<td>qulonglong</td>
+<td>UINT64</td>
+</tr>
+<tr>
+<td>double</td>
+<td>DOUBLE</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://doc.qt.io/qt-5/qstring.html">QString</a></td>
+<td>STRING</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://doc.qt.io/qt-5/qdbusvariant.html">QDBusVariant</a></td>
+<td>VARIANT</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://doc.qt.io/qt-5/qdbusobjectpath.html">QDBusObjectPath</a></td>
+<td>OBJECT_PATH</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://doc.qt.io/qt-5/qdbussignature.html">QDBusSignature</a></td>
+<td>SIGNATURE</td>
+</tr>
+</tbody></table>
+<p>上述类型是受 QDBusArgument 支持的原生类型。除了上述类型，QDBusArgument 还支持 <strong>QStringList</strong>、<strong>QByteArray</strong> 两种类型。</p>
+<h2 id="Compound-（构造／复杂类型）"><a href="#Compound-（构造／复杂类型）" class="headerlink" title="Compound （构造／复杂类型）"></a>Compound （构造／复杂类型）</h2><p>D-Bus 允许对上述基本类型进行 3 种组合：</p>
+<ul>
+<li><p>ARRAY – 在 Qt 中使用 QList&lt;?&gt; 构造</p>
+</li>
+<li><p>MAP &#x2F; DICTIONARY – 在 Qt 中使用 QMap&lt;K, V&gt; 构造</p>
+</li>
+<li><p>STRUCT – 在 Qt 中使用下面方式构造 – 需要定义序列化、反序列化的流程：</p>
+</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 第一步：定义 Structure 并声明它到 QVariant 中</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">MyStructure</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> count;</span><br><span class="line">    QString name;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="built_in">Q_DECLARE_METATYPE</span>(MyStructure)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第二步：定义序列化方式</span></span><br><span class="line"><span class="comment">// Marshall the MyStructure data into a D-Bus argument</span></span><br><span class="line">QDBusArgument &amp;<span class="keyword">operator</span>&lt;&lt;(QDBusArgument &amp;argument, <span class="type">const</span> MyStructure &amp;mystruct)</span><br><span class="line">&#123;</span><br><span class="line">    argument.<span class="built_in">beginStructure</span>();</span><br><span class="line">    argument &lt;&lt; mystruct.count &lt;&lt; mystruct.name;</span><br><span class="line">    argument.<span class="built_in">endStructure</span>();</span><br><span class="line">    <span class="keyword">return</span> argument;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第三步：定义反序列化方式</span></span><br><span class="line"><span class="comment">// DMarshall the MyStructure data from the D-Bus argument</span></span><br><span class="line"><span class="type">const</span> QDBusArgument &amp;<span class="keyword">operator</span>&gt;&gt;(<span class="type">const</span> QDBusArgument &amp;argument, MyStructure &amp;mystruct)</span><br><span class="line">&#123;</span><br><span class="line">    argument.<span class="built_in">beginStructure</span>();</span><br><span class="line">    argument &gt;&gt; mystruct.count &gt;&gt; mystruct.name;</span><br><span class="line">    argument.<span class="built_in">endStructure</span>();</span><br><span class="line">    <span class="keyword">return</span> argument;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>第一步：定义 Structure 并声明它到 QVariant 中</p>
+<ul>
+<li>需要使用 <code>Q_DECLARE_METATYPE</code> 将新定义的结构体声明到全局。</li>
+</ul>
+</li>
+<li><p>第二步：定义序列化方式</p>
+<ul>
+<li><p>即重写 &lt;&lt; 操作符号，定义将 Structure 注入 argument 中的方式</p>
+</li>
+<li><p>序列化的过程需要用 argument.beginStructure()、argument.endStructure() 包裹</p>
+</li>
+<li><p>在 argument.beginStructure()、argument.endStructure()，之间将 Structure 中的内容按顺序放入 argument 中。</p>
+</li>
+</ul>
+</li>
+<li><p>第三步：定义反序列化方式</p>
+<ul>
+<li>流程同上，只是方向相反。</li>
+</ul>
+</li>
+</ul>
+<p>作为参数，ARRAY、MAP 两种类型中的 <strong>值类型都必须确定</strong>，不能用 QVariant。</p>
+<p>例如将 <code>QList&lt;QVariant&gt;</code> 类型的 List 设为某个 Argument 的参数是不被允许的。</p>
+<p>ARRAY、MAP 如果使用 QList、QMap 数据结构，则不必定义序列化、反序列化过程。</p>
+<h1 id="QtDBus-示例"><a href="#QtDBus-示例" class="headerlink" title="QtDBus 示例"></a>QtDBus 示例</h1><h2 id="示例-1：查看已注册的服务"><a href="#示例-1：查看已注册的服务" class="headerlink" title="示例 1：查看已注册的服务"></a>示例 1：查看已注册的服务</h2><p>以下示例使用 QtDBus 连接系统的 <em><strong>Session Bus</strong></em>，并且获得该总线上已注册的 <em><strong>服务</strong></em>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_session_bus_registered_service_names</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 1. 打开和 session bus 的连接</span></span><br><span class="line">    QDBusConnection sessionBusConn = QDBusConnection::<span class="built_in">sessionBus</span>();</span><br><span class="line">    <span class="comment">// 2. session bus 的属性接口 —— org.freedesktop.DBus 接口</span></span><br><span class="line">    QDBusConnectionInterface *sessionBusConnInt = sessionBusConn.<span class="built_in">interface</span>();</span><br><span class="line">    <span class="comment">// 3. 调用上述接口中的一个方法获取 session bus 的已注册的服务</span></span><br><span class="line">    QDBusReply&lt;QStringList&gt; reply = sessionBusConnInt-&gt;<span class="built_in">registeredServiceNames</span>();</span><br><span class="line">    <span class="comment">// 4. Returns true if no error occurred; otherwise, returns false.</span></span><br><span class="line">    <span class="keyword">if</span> (!reply.<span class="built_in">isValid</span>()) &#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;Error:&quot;</span> &lt;&lt; reply.<span class="built_in">error</span>().<span class="built_in">message</span>();</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 5. Returns the remote function&#x27;s calls return value. </span></span><br><span class="line">    <span class="type">const</span> QStringList values = reply.<span class="built_in">value</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> QString &amp;name : values)</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>细节：</p>
+<ul>
+<li><code>QDBusConnection::sessionBus()</code>：是 <code>QDBusConnection</code> 类的静态方法，获得通向系统 Session Bus 的连接对象。该对象在当前程序结束运行前都有效。</li>
+</ul>
+<p><code>QDBusConnection::sessionBus()</code> 使用环境变量 <code>DBUS_SESSION_BUS_ADDRESS</code> 中指定的地址来连接到 Session Bus 的 dbus-daemon。</p>
+<ul>
+<li><p><code>QDBusConnection::interface()</code>：用该方法获得某个连接的 <code>QDBusConnectionInterface</code> 接口。</p>
+<ul>
+<li><p>通过 <code>QDBusConnectionInterface</code> 接口访问到的是 D-Bus 套件定义的特殊接口 —— org.freedesktop.DBus 接口。</p>
+</li>
+<li><p>org.freedesktop.DBus 接口可以访问总线的一些属性，例如 查询当前在总线上已注册的服务、查询某个服务是否注册、查询服务 Owner 等。同时，也可以通过这一接口来注册新的服务、取消注册服务等。上面这些操作都可以在 Qt 中通过 <code>QDBusConnectionInterface</code> 接口实现。</p>
+</li>
+</ul>
+</li>
+<li><p><code>QDBusConnectionInterface::registeredServiceNames()</code>：查询当前在总线上已注册的服务。该方法返回 <code>QDBusReply&lt;T&gt;</code> 类型的对象。</p>
+</li>
+<li><p><code>QDBusReply&lt;T&gt;</code>：用来包裹 D-Bus 的返回值。除了返回值，还包含一些可能存在的错误信息等。</p>
+<ul>
+<li><p>该对象的 isValid() 如果返回 false，表示该返回值不可信，需要通过 error() 来获取错误资料。</p>
+</li>
+<li><p>如果返回值是可信的，可以用 value() 获取返回值。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="示例-2：查看已注册的服务-–-手动"><a href="#示例-2：查看已注册的服务-–-手动" class="headerlink" title="示例 2：查看已注册的服务 – 手动"></a>示例 2：查看已注册的服务 – 手动</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">manually_get_session_bus_registered_service_names</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 1. 打开和 session bus 的连接</span></span><br><span class="line">    QDBusConnection sessionBusConn = QDBusConnection::<span class="built_in">sessionBus</span>();</span><br><span class="line">    <span class="comment">// 2. 获取远端对象的接口</span></span><br><span class="line">    <span class="function">QDBusInterface <span class="title">dbus_iface</span><span class="params">(<span class="string">&quot;org.freedesktop.DBus&quot;</span>, <span class="string">&quot;/org/freedesktop/DBus&quot;</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">                              <span class="string">&quot;org.freedesktop.DBus&quot;</span>, bus)</span></span>;</span><br><span class="line">    <span class="comment">// 3. 调用接口方法及获取返回值</span></span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; dbus_iface.<span class="built_in">call</span>(<span class="string">&quot;ListNames&quot;</span>).<span class="built_in">arguments</span>().<span class="built_in">at</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>细节：</p>
+<ul>
+<li><p><code>QDBusInterface(serviceName, objectPath, interfaceName, busConn, parent)</code></p>
+<ul>
+<li><p>是某个远端对象上的 <em><strong>接口</strong></em> 在 Qt 程序中的代理对象</p>
+</li>
+<li><p>在 <em><strong>没有本地接口副本</strong></em> 的情况下，该对象会比较有用</p>
+<ul>
+<li><p>调用远端对象的方法（使用 <strong><code>QDBusAbstractInterface</code></strong><code>::call</code>）</p>
+</li>
+<li><p>get&#x2F;set 远端对象的属性（使用 <code>QObject::property</code> 及 <code>QObject::setProperty</code>）</p>
+</li>
+<li><p>将本地 SLOT 连接到远端 SIGNAL 处（使用 <code>QObject::connect</code>）</p>
+</li>
+</ul>
+</li>
+<li><p>是 QObject 的子类，因此被 Qt 对象系统管理</p>
+</li>
+<li><p>如果未有指定连接，则默认采用 Session Bus。</p>
+</li>
+</ul>
+</li>
+<li><p><strong><code>QDBusAbstractInterface</code></strong><code>::call(methodName, args...) -&gt; QDBusMessage</code></p>
+<ul>
+<li><p>调用接口方法</p>
+</li>
+<li><p>所有 args 都必须能够转换成 QVariant。</p>
+</li>
+</ul>
+</li>
+<li><p><code>QDBusMessage::arguments -&gt; QList&lt;QVariant&gt;</code>：获取调用参数（当消息是调用或者 SIGNAL 类型）或返回值（当消息承载的是返回信息）。</p>
+</li>
+</ul>
+<p>示例 1 和示例 2 的区别是：示例 1 是 <strong>直接调用本地已有的接口代理</strong> 中定义的方法，来调用到远端接口；示例 2 是 <strong>通过 QDBusInterface 构造动态接口代理</strong>，然后通过代理来调用到远端接口。</p>
+<h2 id="示例-3：注册-Service-及-Object"><a href="#示例-3：注册-Service-及-Object" class="headerlink" title="示例 3：注册 Service 及 Object"></a>示例 3：注册 Service 及 Object</h2><p>通过 DBus 发布服务，标准做法是通过 QDBusAbstractAdapter 方案完成服务及接口的包装及注册。本示例中展现了这一过程。</p>
+<p>现有一个非常基础的业务类：HAdder，它能够且只能完成对两个加数的相加操作。现在希望通过 DBus 搭建一款能够利用 HAdder 实现加减法的计算器服务，供其他程序调用。</p>
+<p>在 Qt 中若要完成上述包装接口及发布需求，需要完成以下步骤：</p>
+<ol>
+<li><p>首先，业务类 HAdder 必须继承 QObject。</p>
+</li>
+<li><p>新建一个接口类 IHDBusCalculator，继承于 <code>QDBusAbstractAdapter</code>。这一行为将使的后续发布服务对象时，IHDBusCalculator 能够被当作对象接口发布。</p>
+</li>
+<li><p>在 IHDBusCalculator 的 Q_OBJECT 宏之后，使用 Q_CLASSINFO(“<strong>D-Bus</strong> <strong>Interface</strong>“<strong>,</strong> “cn.hanli.calculator.Calculator”) 添加表示该接口名字的元数据。</p>
+<ol>
+<li><p>注意，元数据的 Key 必须等于 <strong>D-Bus</strong> <strong>Interface</strong>，否则不会被理会；</p>
+</li>
+<li><p>同时 Value 是您为该接口起的名字，通常用反域名组织；</p>
+</li>
+<li><p>正确地添加了该元数据的接口才会被用于接口发布。</p>
+</li>
+</ol>
+</li>
+<li><p><code>QDBusAbstractAdapter</code> 在构造时需要传入业务类的指针，以将其正确添加到对象树中，方便其在后续发布对象的时候被 Qt 的 MOC 机制找到。</p>
+</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">IHDBusCalculator</span>: <span class="keyword">public</span> QDBusAbstractAdaptor &#123;</span><br><span class="line">    <span class="function">Q_OBJECT</span></span><br><span class="line"><span class="function">    <span class="title">Q_CLASSINFO</span><span class="params">(<span class="string">&quot;D-Bus Interface&quot;</span>, <span class="string">&quot;cn.hanli.calculator.Calculator&quot;</span>)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span>:</span></span><br><span class="line"><span class="function">    explicit IHDBusCalculator(HAdder *parent)</span></span><br><span class="line"><span class="function">    : QDBusAbstractAdaptor(parent)</span></span><br><span class="line"><span class="function">    , m_adder(parent)</span></span><br><span class="line"><span class="function">    &#123;</span> &#125;</span><br><span class="line">    </span><br><span class="line"><span class="keyword">public</span> slots:</span><br><span class="line">    <span class="function"><span class="type">double</span> <span class="title">performAdd</span><span class="params">(<span class="type">double</span> a, <span class="type">double</span> b)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">double</span> <span class="title">performMinus</span><span class="params">(<span class="type">double</span> a, <span class="type">double</span> b)</span></span>;</span><br><span class="line">    </span><br><span class="line">signals:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">resultOk</span><span class="params">(<span class="type">double</span> res)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    HAdder *m_adder;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li><p>IHDBusCalculator 将用于包装加法、减法功能并暴露给 Qt 的 D-Bus 系统，其功能实现直接调用了 HAdder 中的加法业务逻辑。</p>
+<ol>
+<li>Qt 需要能通过反射机制找到暴露在接口中的方法，因此接口中的方法（如上面的 performAdd、performMinus）的声明应被放在 Slot Section 中。</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">double</span> <span class="title">IHDBusCalculator::performAdd</span><span class="params">(<span class="type">double</span> d, <span class="type">double</span> d1)</span> </span>&#123;</span><br><span class="line">    <span class="type">double</span> result = <span class="keyword">this</span>-&gt;m_adder-&gt;<span class="built_in">performAdd</span>(d, d1);</span><br><span class="line">    <span class="function">emit <span class="title">resultOk</span><span class="params">(result)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">IHDBusCalculator::performMinus</span><span class="params">(<span class="type">double</span> d, <span class="type">double</span> d1)</span> </span>&#123;</span><br><span class="line">    <span class="type">double</span> result = <span class="keyword">this</span>-&gt;m_adder-&gt;<span class="built_in">performAdd</span>(d, -d1);</span><br><span class="line">    <span class="function">emit <span class="title">resultOk</span><span class="params">(result)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="6">
+<li>最后，在主函数中注册业务类。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> </span>&#123;</span><br><span class="line">    <span class="function">QCoreApplication <span class="title">app</span><span class="params">(argc, argv)</span></span>;</span><br><span class="line">    <span class="comment">/// 1. 打开 Session Bus 的连接，然后注册服务。</span></span><br><span class="line">    QDBusConnection connection = QDBusConnection::<span class="built_in">sessionBus</span>();</span><br><span class="line">    <span class="keyword">if</span> (!connection.<span class="built_in">registerService</span>(<span class="string">&quot;cn.hanli.calculator&quot;</span>)) &#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; connection.<span class="built_in">lastError</span>().<span class="built_in">message</span>();</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/// 2. 新建业务类以及基于该业务类的 DBus 接口类</span></span><br><span class="line">    <span class="comment">///    的实例，并将业务类的指针喂给接口的构造函数。</span></span><br><span class="line">    HAdder calculator;</span><br><span class="line">    <span class="keyword">auto</span> *calculatorInterface = <span class="keyword">new</span> <span class="built_in">IHDBusCalculator</span>(&amp;calculator);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 3. 往 DBus 上注册【业务类实例】。请注意，必须注册</span></span><br><span class="line">    <span class="comment">///    业务类 (即 HAdder) 而非接口类 (即 IHAdder) 的实例。</span></span><br><span class="line">    connection.<span class="built_in">registerObject</span>(<span class="string">&quot;/&quot;</span>, &amp;calculator);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> QCoreApplication::<span class="built_in">exec</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>整个程序的类图安排：</p>
+<p><img src="/2022/08/11/D-Bus-QtDBus/uml-class.svg" alt="Class Map"></p>
+<p>几个类分别负责的事情：</p>
+<ul>
+<li><p>QDBusConnection：负责注册服务、注册对象；</p>
+</li>
+<li><p>HAdder：完成底层业务（加法）；</p>
+</li>
+<li><p>IHDBusCalculator，IHDBusCalculator：包装底层业务，定义加法、减法功能接口</p>
+</li>
+<li><p>QDBusAbstractAdapter：标记 IHDBusCalculator，标记它们是接口类</p>
+</li>
+</ul>
+<p>运行程序后，使用 D-Feet 可以查看到已发布的服务。</p>
+
+
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">In this article</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%A7%88"><span class="toc-text">概览</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E6%9E%84"><span class="toc-text">结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#dbus-daemon"><span class="toc-text">dbus-daemon</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E6%A6%82%E5%BF%B5"><span class="toc-text">底层概念</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bus"><span class="toc-text">Bus</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Address%EF%BC%88%E5%B1%9E%E4%BA%8E%E6%AF%94%E8%BE%83%E5%BA%95%E5%B1%82%E7%9A%84%E6%A6%82%E5%BF%B5%EF%BC%89"><span class="toc-text">Address（属于比较底层的概念）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Connection-Name"><span class="toc-text">Connection Name</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Object"><span class="toc-text">Object</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3"><span class="toc-text">接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Message"><span class="toc-text">Message</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Service%EF%BC%8CService-Name"><span class="toc-text">Service，Service Name</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Qt-%E8%B0%83%E7%94%A8-D-Bus-%E6%8E%A5%E5%8F%A3%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="toc-text">Qt 调用 D-Bus 接口的例子</span></a></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#QtDBus-%E7%B1%BB%E5%9E%8B%E7%B3%BB%E7%BB%9F"><span class="toc-text">QtDBus 类型系统</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Primitive-%EF%BC%88%E5%8E%9F%E5%A7%8B%E7%B1%BB%E5%9E%8B%EF%BC%89"><span class="toc-text">Primitive （原始类型）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Compound-%EF%BC%88%E6%9E%84%E9%80%A0%EF%BC%8F%E5%A4%8D%E6%9D%82%E7%B1%BB%E5%9E%8B%EF%BC%89"><span class="toc-text">Compound （构造／复杂类型）</span></a></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#QtDBus-%E7%A4%BA%E4%BE%8B"><span class="toc-text">QtDBus 示例</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-1%EF%BC%9A%E6%9F%A5%E7%9C%8B%E5%B7%B2%E6%B3%A8%E5%86%8C%E7%9A%84%E6%9C%8D%E5%8A%A1"><span class="toc-text">示例 1：查看已注册的服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-2%EF%BC%9A%E6%9F%A5%E7%9C%8B%E5%B7%B2%E6%B3%A8%E5%86%8C%E7%9A%84%E6%9C%8D%E5%8A%A1-%E2%80%93-%E6%89%8B%E5%8A%A8"><span class="toc-text">示例 2：查看已注册的服务 – 手动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-3%EF%BC%9A%E6%B3%A8%E5%86%8C-Service-%E5%8F%8A-Object"><span class="toc-text">示例 3：注册 Service 及 Object</span></a></li></ul></li></ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">Tags</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Linux/">Linux</a>
+                      </li>
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Qt/">Qt</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">Related posts</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/" class="post-title">
+                          
+                            Linux 内核启动流程梳理
+                          
+                        </a>
+                        <p class="post-date">2023-02-26</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/16/%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E4%B8%8E%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6/" class="post-title">
+                          
+                            余弦相似度与欧几里德相似度差异
+                          
+                        </a>
+                        <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/26/%E5%A4%9A%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E5%87%A0%E5%A4%A7%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87%E7%9A%84%E7%AE%97%E4%BE%8B/" class="post-title">
+                          
+                            多分类模型几大评估指标的算例
+                          
+                        </a>
+                        <p class="post-date">2021-09-26</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+
+    <div class="post-footer">
+  <div class="post-footer">
+    <div class="hp-pane">
+  <!-- TODO -->
+</div>
+  </div>
+</div>
+
+    
+      <div class="post-comment">
+
+     
+
+     
+    
+    
+
+</div>
+     
+  
+</article>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        All content of this website is available under the
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>Creative Commons Attribution 4.0 International license</a>
+(CC-BY International v4.0), except where otherwise stated.
+
+        <a href="/about/copyright">Learn more...</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
