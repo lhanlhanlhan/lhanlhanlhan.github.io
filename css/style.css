@@ -699,9 +699,22 @@ a:not(.hp-a-no-shader):focus>img {
   line-height: 1.25rem;
   color: #333;
 }
+.wrapper>.footer .rel-links {
+  margin-bottom: 3.5rem;
+  font-size: 0.9em;
+}
+.wrapper>.footer .rel-links .heading {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.2em;
+}
+.wrapper>.footer .rel-links span+span:before {
+  content: "·";
+  margin: 0 4px;
+}
 .wrapper>.footer .footer-text {
   margin-top: 2rem;
-  margin-bottom: 3.5rem;
+  margin-bottom: 0.75rem;
 }
 .wrapper>.footer .footer-text .logo img {
   height: 32px;

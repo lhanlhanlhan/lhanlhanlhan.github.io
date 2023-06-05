@@ -3,9 +3,22 @@
   background-color: $color-code-background;
   border-top: $line-primary $color-text-third solid;
 }
+.wrapper>.footer .rel-links {
+  margin-bottom: $margin-primary;
+  font-size: 0.9em;
+}
+.wrapper>.footer .rel-links .heading {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.2em;
+}
+.wrapper>.footer .rel-links span+span:before {
+  content: "·";
+  margin: 0 4px;
+}
 .wrapper>.footer .footer-text {
   margin-top: $margin-l-1;
-  margin-bottom: $margin-primary;
+  margin-bottom: $margin-m-1;
 }
 .wrapper>.footer .footer-text .logo img {
   height: 32px;
