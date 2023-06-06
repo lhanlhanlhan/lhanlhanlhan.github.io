@@ -314,7 +314,7 @@ a:focus:not(.hp-a-no-shader)>img {
   box-shadow: 0 0 0 3px #fc0, 0 0 0 6px #0a0b0c;
 }
 body {
-  font-family: 'Inter', 'MiSans', helvetica, arial;
+  font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -932,12 +932,12 @@ a:not(.hp-a-no-shader):focus>img {
 }
 .profile .profile-content .profile-title {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 2.25rem;
   color: #333;
 }
 .profile .profile-content .profile-body {
-  font-family: 'Inter', 'MiSans', helvetica, arial;
+  font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -1008,7 +1008,7 @@ a:not(.hp-a-no-shader):focus>img {
 }
 .search-result-container .search-result-title {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25rem;
   color: #333;
   color: #333;
@@ -1018,7 +1018,7 @@ a:not(.hp-a-no-shader):focus>img {
   padding-top: 1rem;
 }
 .search-result-container .search-result {
-  font-family: 'Inter', 'MiSans', helvetica, arial;
+  font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -1077,25 +1077,25 @@ h6 {
 }
 h1 {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 2.25rem;
   color: #333;
 }
 h2 {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 2rem;
   color: #333;
 }
 h3 {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5rem;
   color: #333;
 }
 h4 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25rem;
   color: #333;
 }
@@ -1112,7 +1112,7 @@ h6 {
   color: #333;
 }
 p {
-  font-family: 'Inter', 'MiSans', helvetica, arial;
+  font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -1120,7 +1120,7 @@ p {
 }
 strong {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5rem;
   color: #333;
 }
@@ -1156,7 +1156,7 @@ blockquote blockquote {
   margin-bottom: 0;
 }
 .post-content li {
-  font-family: 'Inter', 'MiSans', helvetica, arial;
+  font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -1192,7 +1192,7 @@ blockquote blockquote {
 dl dt {
   padding: 0.5rem 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5rem;
   color: #333;
 }
@@ -1645,7 +1645,7 @@ hr {
 .latest-post-entry .info .heading>a,
 .top-post-entry .info .heading>a {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25;
 }
 .post-entry .info .excerpt,
