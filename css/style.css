@@ -314,6 +314,8 @@ a:focus:not(.hp-a-no-shader)>img {
   box-shadow: 0 0 0 3px #fc0, 0 0 0 6px #0a0b0c;
 }
 body {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
@@ -594,6 +596,8 @@ a:not(.hp-a-no-shader):focus>img {
 }
 .header {
   background: #0a0b0c;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.25rem;
@@ -694,6 +698,8 @@ a:not(.hp-a-no-shader):focus>img {
   margin-top: 3.5rem;
   background-color: #f3f2f1;
   border-top: 3px #e8e8e8 solid;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.25rem;
@@ -778,12 +784,16 @@ a:not(.hp-a-no-shader):focus>img {
 }
 .post-gallery-item .post-info .post-title {
   margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 2rem;
   font-weight: 700;
   line-height: 2.25rem;
   color: #333;
 }
 .post-gallery-item .post-info .post-date {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.25rem;
@@ -931,12 +941,16 @@ a:not(.hp-a-no-shader):focus>img {
   margin-bottom: 2rem;
 }
 .profile .profile-content .profile-title {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 2.25rem;
   color: #333;
 }
 .profile .profile-content .profile-body {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
@@ -946,6 +960,8 @@ a:not(.hp-a-no-shader):focus>img {
 .profile .profile-content .profile-link {
   margin-top: 0;
   margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.25rem;
@@ -999,6 +1015,8 @@ a:not(.hp-a-no-shader):focus>img {
   padding: 0.75rem 0.75rem;
 }
 .search-result-container .search-result-message {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Roboto Mono', menlo, monospace;
   font-size: 0.875rem;
   line-height: 1rem;
@@ -1007,6 +1025,8 @@ a:not(.hp-a-no-shader):focus>img {
   color: #666;
 }
 .search-result-container .search-result-title {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25rem;
@@ -1018,6 +1038,8 @@ a:not(.hp-a-no-shader):focus>img {
   padding-top: 1rem;
 }
 .search-result-container .search-result {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
@@ -1043,6 +1065,8 @@ a:not(.hp-a-no-shader):focus>img {
 }
 .search-header .search-input-container .search-input {
   width: 100%;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.25rem;
@@ -1076,42 +1100,56 @@ h6 {
   margin-bottom: 0.75rem;
 }
 h1 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 2.25rem;
   color: #333;
 }
 h2 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 2rem;
   color: #333;
 }
 h3 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.5rem;
   color: #333;
 }
 h4 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25rem;
   color: #333;
 }
 h5 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.25rem;
   color: #333;
 }
 h6 {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.25rem;
   color: #333;
 }
 p {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
@@ -1119,12 +1157,16 @@ p {
   color: #333;
 }
 strong {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.5rem;
   color: #333;
 }
 em {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 400;
   font-style: italic;
@@ -1132,6 +1174,8 @@ em {
   color: #333;
 }
 del {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
@@ -1156,26 +1200,45 @@ blockquote blockquote {
   margin-bottom: 0;
 }
 .post-content li {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Inter', 'Noto Sans SC', helvetica, arial;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5rem;
   color: #333;
 }
+.post-content li>p {
+  margin: 0.5rem 0;
+}
 .post-content ol {
   margin: 0.75rem 0;
+  padding-inline-start: 1.1em;
 }
 .post-content ol ol {
   margin-top: 0.5rem;
 }
+.post-content ol>li ol {
+  list-style-type: lower-latin;
+}
+.post-content ol>li>ol>li ol {
+  list-style-type: lower-roman;
+}
 .post-content ul {
   margin: 0.75rem 0;
+  list-style-type: disc;
+  padding-inline-start: 1em;
 }
 .post-content ul ul {
   margin-top: 0.5rem;
 }
+.post-content ul>li ul {
+  list-style-type: circle;
+}
+.post-content ul>li>ul>li ul {
+  list-style-type: square;
+}
 .post-content ul li {
-  list-style-type: disc;
   margin-top: 0.5rem;
   padding-left: 0.4em;
 }
@@ -1191,6 +1254,8 @@ blockquote blockquote {
 }
 dl dt {
   padding: 0.5rem 0;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.5rem;
@@ -1275,6 +1340,8 @@ mjx-container[jax="SVG"]>svg {
   margin-bottom: 1rem;
 }
 .post-info .post-title {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 2rem;
   font-weight: 700;
   line-height: 2.25rem;
@@ -1295,6 +1362,8 @@ mjx-container[jax="SVG"]>svg {
   margin-top: 0.75rem;
   display: flex;
   flex-wrap: wrap;
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.25rem;
@@ -1331,12 +1400,20 @@ mjx-container[jax="SVG"]>svg {
   color: #333 !important;
 }
 code {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Roboto Mono', menlo, monospace;
   font-size: 0.875rem;
   line-height: 1rem;
-  color: #0177aa;
+  color: #a50920;
+  padding: 3px 5px;
+  background: #f6f5f4;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 .code pre span {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Roboto Mono', menlo, monospace;
   font-size: 0.875rem;
   line-height: 1rem;
@@ -1355,6 +1432,8 @@ td.gutter {
   left: 0;
 }
 td.gutter span {
+  word-wrap: break-word;
+  word-break: break-word;
   font-family: 'Roboto Mono', menlo, monospace;
   font-size: 0.875rem;
   line-height: 1rem;
@@ -1579,6 +1658,8 @@ hr {
   color: #666;
 }
 .post-tag {
+  word-wrap: break-word;
+  word-break: break-word;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1rem;

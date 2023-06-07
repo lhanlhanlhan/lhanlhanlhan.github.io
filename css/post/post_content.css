@@ -25,20 +25,37 @@ blockquote blockquote {
   margin-top: 0;
   margin-bottom: 0;
 }
+.post-content li>p {
+  margin: $margin-m-0 0;
+}
 .post-content ol {
   margin: $margin-m-1 0;
+  padding-inline-start: 1.1em;
 }
 .post-content ol ol {
   margin-top: $margin-m-0;
 }
+.post-content ol>li ol {
+  list-style-type: lower-latin;
+}
+.post-content ol>li>ol>li ol {
+  list-style-type: lower-roman;
+}
 .post-content ul {
   margin: $margin-m-1 0;
+  list-style-type: disc;
+  padding-inline-start: 1em;
 }
 .post-content ul ul {
   margin-top: $margin-m-0;
 }
+.post-content ul>li ul {
+  list-style-type: circle;
+}
+.post-content ul>li>ul>li ul {
+  list-style-type: square;
+}
 .post-content ul li {
-  list-style-type: disc;
   margin-top: $margin-m-0;
   padding-left: 0.4em;
 }

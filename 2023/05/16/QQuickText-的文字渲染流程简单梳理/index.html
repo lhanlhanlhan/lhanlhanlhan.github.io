@@ -178,12 +178,12 @@
 <li><p>创建一个 <code>QQuickTextEngine</code>（用来生成该行中所有 <strong>文本块、格式块</strong> 的 QSG Node）；</p>
 </li>
 <li><p>使用 <code>QQuickTextEngine::mergeFormats</code> <em><strong>分辨出</strong></em> 所有文本块；<strong>文本块</strong> 指的是 <strong>位置紧邻、格式一致文本</strong> 构成的一块。</p>
-<ol>
+<ul>
 <li><p>例如：【今天天气真好】会被按格式分为 3 个文本块 —— 黑字文本块 “今天”、绿底色的文本块 “天气”，黑字文本块 “真好”。</p>
 </li>
 <li><p>每个文本块会与一个 <code>QGlyphRun</code> 进行关联；<code>QGlyphRun</code> 的职责是：将 <em><strong>一块</strong></em> 文字映射为 glyph index 列表；并且指导字形轮廓的按需载入。</p>
 </li>
-</ol>
+</ul>
 </li>
 <li><p>然后按行遍历整个 Text 控件，将 <strong>文本块、格式块</strong> 加入 <code>QQuickTextEngine</code> 的内部存储中。</p>
 <ol>
