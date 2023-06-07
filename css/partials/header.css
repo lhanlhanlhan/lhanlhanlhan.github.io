@@ -60,6 +60,7 @@
   }
   .header-inner #menu-btn .icon {
     float: right;
+    cursor: pointer;
   }
   .header-inner .site-brand-container {
     width: 50%;

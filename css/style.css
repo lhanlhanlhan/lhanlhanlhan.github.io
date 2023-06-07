@@ -1,5 +1,5 @@
 .flex-container {
-  width: 1156px;
+  width: 1080px;
   margin: 0 auto;
 }
 html {
@@ -10,10 +10,10 @@ html {
     font-size: 18px;
   }
   html .flex-container {
-    max-width: 1156px;
+    max-width: 1080px;
   }
 }
-@media (max-width: 1280px) {
+@media (max-width: 1112px) {
   .flex-container {
     display: block;
     width: calc(100% - 32px);
@@ -672,6 +672,7 @@ a:not(.hp-a-no-shader):focus>img {
   }
   .header-inner #menu-btn .icon {
     float: right;
+    cursor: pointer;
   }
   .header-inner .site-brand-container {
     width: 50%;
@@ -1277,7 +1278,7 @@ figure.highlight .gutter {
   padding: 0 12px;
 }
 figure.highlight .code pre {
-  padding: 8px;
+  padding: 16px;
   border: 3px solid transparent;
 }
 figure.highlight .code pre:focus {
@@ -1324,6 +1325,21 @@ mjx-container[jax="SVG"]>svg {
 .callout .content {
   color: #f5f5f5;
   margin-top: 8px;
+}
+table.block-table {
+  font-size: 1rem;
+  line-height: 1.25;
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+table.block-table td,
+table.block-table th {
+  padding: 10px 20px 10px 0;
+  border-bottom: #babcbd solid 1px;
+  text-align: left;
+  display: table-cell;
 }
 .post-text {
   max-width: 720px;
@@ -1452,7 +1468,6 @@ pre {
 table,
 td,
 th {
-  border: #333 solid 1px;
   width: 100%;
   text-align: left;
 }
@@ -1463,12 +1478,6 @@ table {
 td,
 th {
   padding: 0.75rem;
-}
-th {
-  font-variation-settings: 'wght' 500;
-}
-td {
-  font-variation-settings: 'wght' 300;
 }
 table,
 tboby,
