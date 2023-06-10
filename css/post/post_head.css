@@ -20,3 +20,6 @@
   margin-top: $margin-m-2;
   color: $color-text-secondary;
 }
+.post-pinned-img {
+  margin-bottom: $margin-l-2;
+}

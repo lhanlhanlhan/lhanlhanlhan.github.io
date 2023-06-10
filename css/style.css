@@ -1371,6 +1371,9 @@ table.block-table th {
   margin-top: 1rem;
   color: #666;
 }
+.post-pinned-img {
+  margin-bottom: 3rem;
+}
 .post-footer {
   margin-top: 3.5rem;
 }
