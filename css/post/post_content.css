@@ -69,6 +69,11 @@ blockquote blockquote {
 .post-content .task-list .task-list-item {
   list-style: none;
 }
+.post-content img {
+  max-height: 600px;
+  max-width: 100%;
+  width: auto;
+}
 dl dt {
   padding: $margin-m-0 0;
 }
@@ -119,9 +124,6 @@ mjx-container[jax="SVG"]>svg {
   color: $color-text-secondary;
   font-style: italic;
 }
-.after-post {
-  margin-top: $margin-primary;
-}
 .callout {
   background: $color-primary;
   padding: 1px 16px;
@@ -150,4 +152,11 @@ table.block-table th {
   border-bottom: $color-tbl-line solid $line-third;
   text-align: left;
   display: table-cell;
+}
+table.block-table td:last-child,
+table.block-table th:last-child {
+  padding-right: 0;
+}
+.post-page {
+  padding-bottom: $margin-m-1;
 }

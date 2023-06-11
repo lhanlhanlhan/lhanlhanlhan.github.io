@@ -4,10 +4,12 @@
 .post-head {
   margin-top: $margin-primary;
 }
+.post-info-line {
+  margin-bottom: $margin-l-1;
+}
 .post-info {
   display: flex;
   flex-direction: column;
-  margin-bottom: $margin-l-2;
 }
 .post-info .post-cats {
   margin-bottom: $margin-m-2;
@@ -19,7 +21,4 @@
 .post-info .post-time-loc {
   margin-top: $margin-m-2;
   color: $color-text-secondary;
-}
-.post-pinned-img {
-  margin-bottom: $margin-l-2;
 }

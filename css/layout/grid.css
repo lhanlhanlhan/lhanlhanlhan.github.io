@@ -38,6 +38,9 @@
     padding-top: 0;
     padding-bottom: 0;
   }
+  .small-screen-hidden {
+    display: none;
+  }
 }
 @media (min-width: 48em) {
   .hp-grid-col-one-third {
@@ -52,6 +55,9 @@
     padding-top: 0;
     padding-bottom: 0;
   }
+  .big-screen-hidden {
+    display: none;
+  }
 }
 .hp-grid-grid {
   display: grid;
@@ -62,7 +68,7 @@
   width: auto;
   height: auto;
   border-top: 1px solid $color-text-third;
-  margin: 0 10px;
+  margin: 0 16px;
   padding: 5px 0 20px 0;
 }
 @media (min-width: 32em) {

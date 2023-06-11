@@ -1,7 +1,6 @@
 table,
 td,
 th {
-  width: 100%;
   text-align: left;
 }
 table {
@@ -19,11 +18,6 @@ td {
   background-color: inherit;
 }
 .highlight>table {
+  width: 100%;
   min-width: fit-content;
-}
-@media (max-width: 480px) {
-  .block-table {
-    display: block;
-    overflow-x: auto;
-  }
 }
