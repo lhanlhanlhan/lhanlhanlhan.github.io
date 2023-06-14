@@ -88,6 +88,7 @@
 #menu-btn {
   cursor: pointer;
   user-select: none;
+  position: relative;
 }
 #menu-btn:before {
   border-right: 3px solid $color-light;
@@ -97,8 +98,8 @@
   height: 10px;
   width: 10px;
   position: absolute;
-  right: 20px;
-  top: 16px;
+  right: 4px;
+  top: 2px;
   -webkit-transform: translateY(0) rotate(45deg) scale(1);
   -ms-transform: translateY(0) rotate(45deg) scale(1);
   transform: translateY(0) rotate(45deg) scale(1);
@@ -108,7 +109,7 @@
   background: $color-link-shader;
 }
 #menu-btn.active:before {
-  top: 22px;
+  top: 8px;
   border-right: 3px solid $color-text-black;
   border-bottom: 3px solid $color-text-black;
   -webkit-transform: translateY(0) rotate(225deg) scale(1);
