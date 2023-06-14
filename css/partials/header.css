@@ -56,7 +56,9 @@
   .header-inner #menu-btn {
     display: block !important;
     text-align: right;
-    width: 50%;
+    margin-left: auto;
+    padding-right: 24px;
+    width: auto;
   }
   .header-inner #menu-btn .icon {
     float: right;
@@ -82,4 +84,34 @@
     height: auto;
     flex-direction: column;
   }
+}
+#menu-btn {
+  cursor: pointer;
+  user-select: none;
+}
+#menu-btn:before {
+  border-right: 3px solid $color-light;
+  border-bottom: 3px solid $color-light;
+  content: "";
+  display: block;
+  height: 10px;
+  width: 10px;
+  position: absolute;
+  right: 20px;
+  top: 16px;
+  -webkit-transform: translateY(0) rotate(45deg) scale(1);
+  -ms-transform: translateY(0) rotate(45deg) scale(1);
+  transform: translateY(0) rotate(45deg) scale(1);
+}
+#menu-btn.active {
+  color: $color-text-black;
+  background: $color-link-shader;
+}
+#menu-btn.active:before {
+  top: 22px;
+  border-right: 3px solid $color-text-black;
+  border-bottom: 3px solid $color-text-black;
+  -webkit-transform: translateY(0) rotate(225deg) scale(1);
+  -ms-transform: translateY(0) rotate(225deg) scale(1);
+  transform: translateY(0) rotate(225deg) scale(1);
 }
