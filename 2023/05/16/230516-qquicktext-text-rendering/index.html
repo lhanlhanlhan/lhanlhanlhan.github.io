@@ -232,7 +232,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="/2023/05/16/QQuickText-%E7%9A%84%E6%96%87%E5%AD%97%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/qqt-1.svg"></p>
+<p><img src="/2023/05/16/230516-qquicktext-text-rendering/qqt-1.svg"></p>
 <h1 id="FreeType-矢量读入"><a href="#FreeType-矢量读入" class="headerlink" title="FreeType 矢量读入"></a>FreeType 矢量读入</h1><p>前面提到，在 setGlyphs 过程中，会调用 <code>QSGDistanceFieldGlyghNode::populate</code> 将字形从字体文件中 <em><strong>按需</strong></em> 读入并转换为 QPainterPath，然后存入缓存。</p>
 <p>以下是查找 1 个 Glyph，并放入缓存中的流程。</p>
 <ul>
@@ -247,7 +247,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="/2023/05/16/QQuickText-%E7%9A%84%E6%96%87%E5%AD%97%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/qqt-2.svg"></p>
+<p><img src="/2023/05/16/230516-qquicktext-text-rendering/qqt-2.svg"></p>
 <h1 id="阶段二：绘制上屏"><a href="#阶段二：绘制上屏" class="headerlink" title="阶段二：绘制上屏"></a>阶段二：绘制上屏</h1><p>文本及格式作为 QSG Node，会随着 Scene Graph 的渲染而一起上屏。以下是将 QPainterPath 转为 Image 的过程</p>
 <ol>
 <li><p><code>QQuickWindowPrivate::renderSceneGraph</code> - 渲染线程开始渲染 Scene Graph。</p>
@@ -338,30 +338,30 @@
                   <div class="post-list">
                     
                       <div class="post-list-item">
-                        <a href="/2022/08/11/D-Bus-QtDBus/" class="post-title">
-                          
-                            D-Bus &amp; QtDBus
-                          
-                        </a>
-                        <p class="post-date">2022-08-11</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            Linux 内核启动流程梳理
-                          
-                        </a>
-                        <p class="post-date">2023-02-26</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2021/09/16/%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E4%B8%8E%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6/" class="post-title">
+                        <a href="/2021/09/16/210916-cosine-and-euclidean-similarities/" class="post-title">
                           
                             余弦相似度与欧几里德相似度差异
                           
                         </a>
                         <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-activation-func-oneway-doubleway-satiation/" class="post-title">
+                          
+                            激活函数的「单向/双向饱和」及其影响
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-normalisation-and-standardise/" class="post-title">
+                          
+                            归一化 (Standardisation)、标准化 (Normalisation) 的区别
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
                       </div>
                     
                   </div>

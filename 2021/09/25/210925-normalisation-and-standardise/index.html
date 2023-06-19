@@ -16,7 +16,7 @@
 
 
 
-<title>The Prologue | Han Li&#39;s Blog</title>
+<title>归一化 (Standardisation)、标准化 (Normalisation) 的区别 | Han Li&#39;s Blog</title>
 
 
 
@@ -129,26 +129,26 @@
 
         <div class="post-cats hp-tag-list">
           <div class="hp-tag">
-            随笔
+            技术文档
           </div>
         </div>
       
 
       <div class="post-title">
         
-          The Prologue
+          归一化 (Standardisation)、标准化 (Normalisation) 的区别
         
       </div>
       
         <div class="post-excerpt">
-          努力使自己不丧失克制、冷静地思考与输出的能力。
+          归一化将保留原始数据分布，而标准化将数据变换为均值为 0、标准差为1  的某一分布。
         </div>
       
 
       
       <div class="post-time-loc">
-        2023-03-18
-        16:22, 北京朝阳区亚运村华堂
+        2021-09-25
+        11:00, 福建厦门
       </div>
     </div>
 
@@ -170,14 +170,40 @@
         <div class="post-content">
           
 
-  <p>作为一个典型的拖延症患者，或许你无法想象，这篇博文我更是花费了整整 3 个月才终于写完。我从 2023 年 1 月开始策划这个新的个人博客项目，从网站结构到页面设计，没少折腾；终于，我在 2023 年 3 月 18 日，一个没有雾霾的星期六下午，在一间位于北四环东路的人满为患的星巴克里写下了这篇序言。</p>
-<p>事实上，我也不太清楚序言究竟要写些什么：内容梗概？没有。未来目标和规划？那更是不清楚。不过，关于为啥自己突然产生了写博客的想法，感觉自己心理还是有点儿想说的。</p>
-<p>可能是各种压力的原因，最近我观察到自己正一步步变得浮躁。众所周知的 10-10-5 互联网工作强度，让每天晚上 22 点下班的我，回到家只残存着能躺床上玩手机的一点点精力。甚至，之前曾被我喷以「没事干的人才会用」的「某音」「某博」也逐步成为我的「起床必备应用」。进一步发现，这种浮躁的生活只让我几乎失去了冷静思考的能力。我感到脑子不知道被什么不属于自己的东西填满了，陷入了一种「颓废-思考为什么自己这么颓废-继续颓废」这样的闭环内耗中，没有时间静下心思考正事，更无从学习其他技能。</p>
-<p>好在自己还有一点危机意识，还能够识别出这些异常。是的，由于不再面临升学、就业压力，且还暂时未有婚育及借贷压力，因此晚上 22 点回到家，唯一的想法就只剩下了「放松一下」。确实，4 年本科的努力让我获得了一份还算对口体面的工作，短暂的稳定和良好的工作环境让自己开始变得没有目标，失去了曾用来让自己冷静的危机感 —— 这应该就是自己变得「浮躁」的重要原因。</p>
-<p>为了使自己不丧失克制、冷静地思考与输出的能力，我开始寄希望于这个已停滞多年的博客项目，希望通过组织语言来获得冷静思考的机会。而这篇文章，正是我这一新尝试的一个开始。</p>
-<!-- 活了 20 几年，我能观察到自己正一步步变得「浮躁」。飞速发展的社会少不了生成各种矛盾，这些矛盾下沉到人身上就变成了压力。我们总是想尽可能快地减轻甚至摆脱压力，然而，殊不知这种想法正是造成「浮躁」的罪魁祸首。我原本以为，努力使自己变强大、变优秀，可以使自己在与压力的赛跑中占优势，这样能使压力增长得没那么迅速，能让自己处于一种与低压力之间动态平衡的状态。但是现实告诉我，压力也是有不同强度的：不同层次的人会面临不同层次的压力；努努力爬高了，会有更高等级的压力等着你。 -->
+  <p>本文摘抄自两篇文章：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_36604953/article/details/102652160">标准化和归一化，请勿混为一谈，透彻理解数据变换_夏洛克江户川的博客-CSDN博客</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/20467170/answer/839255695">知乎答主「本空」的回答</a></p>
+</li>
+</ul>
+<p>通常， 归一化、标准化都是特征工程中的特征缩放过程，但它们作用的目的和结果有差异：归一化将保留原始数据分布，而标准化将数据变换为均值为 0，标准差为 1 的某一分布。</p>
+<p><strong>特征缩放</strong> 一般的目的：</p>
+<ul>
+<li><p>使不同量纲的特征处于同一数值量级，减少方差大的特征的影响，使模型更准确。</p>
+</li>
+<li><p>加快学习算法的收敛速度。</p>
+</li>
+</ul>
+<p><strong>归一化、标准化</strong> 的区别：</p>
+<ul>
+<li><p>标准化 (Standardisation)：将数据变换为【均值为0，标准差为1的 分布】，但并非一定是正态分布。</p>
+</li>
+<li><p>归一化 (Normalisation)：【保留原始数据分布】，并将一列数据变化到某个固定区间 (范围) 中，通常，这个区间是 [0, 1，广义的讲，也可以是各种区间，比如映射到 [0, 1] 一样可以继续映射到其他范围，图像中可能会映射到 [0,255]，其他情况也可能映射到 [-1,1]；</p>
+</li>
+</ul>
+<p>在 scilearn-kit 中，有 4 种基本的归一化、标准化方法：</p>
+<ol>
+<li><p>缩放到均值为0，方差为1（Standardization——StandardScaler()）</p>
+</li>
+<li><p>缩放到0和1之间（Standardization——MinMaxScaler()）</p>
+</li>
+<li><p>缩放到-1和1之间（Standardization——MaxAbsScaler()）</p>
+</li>
+<li><p>缩放到0和1之间，保留原始数据的分布（Normalization——Normalizer()）</p>
+</li>
+</ol>
 
-<!-- 我这人非常奇怪：越是聒噪的场合，我就越是能够集中注意力。我喜欢嘈杂的、热闹的环境，同时非常享受独处的时光。 -->
 
 
 <script>
@@ -200,6 +226,19 @@
             
 
             
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">标签</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/ML/">ML</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
 
             
               <div class="hp-pane">
@@ -208,12 +247,30 @@
                   <div class="post-list">
                     
                       <div class="post-list-item">
-                        <a href="/2023/06/03/%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AC%E8%BF%81/" class="post-title">
+                        <a href="/2021/09/16/210916-cosine-and-euclidean-similarities/" class="post-title">
                           
-                            蚂蚁搬家进行中
+                            余弦相似度与欧几里德相似度差异
                           
                         </a>
-                        <p class="post-date">2023-06-03</p>
+                        <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-activation-func-oneway-doubleway-satiation/" class="post-title">
+                          
+                            激活函数的「单向/双向饱和」及其影响
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/26/210926-multi-class-eval-methods/" class="post-title">
+                          
+                            多分类模型几大评估指标的算例
+                          
+                        </a>
+                        <p class="post-date">2021-09-26</p>
                       </div>
                     
                   </div>

@@ -191,7 +191,7 @@ D-Bus 是 GNU/Linux 系统中的一种跨进程通讯（IPC）机制。本文介
 <p>libdbus 实现了一套进程间通讯方案，是一套 D-Bus 机制的实现库。在内核态，libdbus 通过系统提供的底层 IPC 方案（例如 Unix Domain Socket 甚至 TCP）来充当底层的进程间通讯的信道。在类 Unix 系统中，libdbus 默认利用 Unix Domain Socket 来通讯；在 Windows 系统中，libdbus 默认利用 Nonce-TCP 通讯。通讯方式也可以指定，例如使用 systemd 或 macOS 上的 launchd 来充当信道也是可以的。[<a target="_blank" rel="noopener" href="https://dbus.freedesktop.org/doc/dbus-specification.html#transports">Ref</a>]</p>
 <p>freedesktop D-Bus 套件中的 dbus-daemon 是基于 libdbus 实现的抽象总线。应用程序可以通过 dbus-daemon 来实现点对点和广播等通讯。</p>
 <p>基于 libdbus 的高层封装包括 QtDBus、Java 中的 org.freedesktop.dbus 包等。现代应用程序在基于 D-Bus 的开发实践中，通常使用更高层的 D-Bus 封装，而不直接使用 libdbus 这样偏底层的 D-Bus 实现（官方也不推荐这么做）。</p>
-<p><img src="/2022/08/11/D-Bus-QtDBus/uml-dbus.svg" alt="D-Bus stack"><span class="figcaption">D-Bus stack</span></p>
+<p><img src="/2022/08/11/220811-dbus-qtdbus/uml-dbus.svg" alt="D-Bus stack"><span class="figcaption">D-Bus stack</span></p>
 <p>libdbus（以及它的高层封装 QtDBus 等）可以使应用程序连接到另一个程序【上图中的红线】，或者使应用程序连接到 dbus-daemon 并通过它连接到另一个程序【上图中的白线】，而后者使用的更为广泛。</p>
 <h1 id="dbus-daemon"><a href="#dbus-daemon" class="headerlink" title="dbus-daemon"></a>dbus-daemon</h1><p>通常情况下，单个用户的 Linux 会至少启动了两个 dbus-daemon 进程，一个属于 system，一个属于 session。后者在用户登录的时候由 dbus-launch 启动。</p>
 <p>大多数普通程序都是使用 session 的 dbus-daemon。</p>
@@ -455,7 +455,7 @@ D-Bus 是 GNU/Linux 系统中的一种跨进程通讯（IPC）机制。本文介
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> </span>&#123;</span><br><span class="line">    <span class="function">QCoreApplication <span class="title">app</span><span class="params">(argc, argv)</span></span>;</span><br><span class="line">    <span class="comment">/// 1. 打开 Session Bus 的连接，然后注册服务。</span></span><br><span class="line">    QDBusConnection connection = QDBusConnection::<span class="built_in">sessionBus</span>();</span><br><span class="line">    <span class="keyword">if</span> (!connection.<span class="built_in">registerService</span>(<span class="string">&quot;cn.hanli.calculator&quot;</span>)) &#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; connection.<span class="built_in">lastError</span>().<span class="built_in">message</span>();</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/// 2. 新建业务类以及基于该业务类的 DBus 接口类</span></span><br><span class="line">    <span class="comment">///    的实例，并将业务类的指针喂给接口的构造函数。</span></span><br><span class="line">    HAdder calculator;</span><br><span class="line">    <span class="keyword">auto</span> *calculatorInterface = <span class="keyword">new</span> <span class="built_in">IHDBusCalculator</span>(&amp;calculator);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// 3. 往 DBus 上注册【业务类实例】。请注意，必须注册</span></span><br><span class="line">    <span class="comment">///    业务类 (即 HAdder) 而非接口类 (即 IHAdder) 的实例。</span></span><br><span class="line">    connection.<span class="built_in">registerObject</span>(<span class="string">&quot;/&quot;</span>, &amp;calculator);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> QCoreApplication::<span class="built_in">exec</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>整个程序的类图安排：</p>
-<p><img src="/2022/08/11/D-Bus-QtDBus/uml-class.svg" alt="Class Map"><span class="figcaption">Class Map</span></p>
+<p><img src="/2022/08/11/220811-dbus-qtdbus/uml-class.svg" alt="Class Map"><span class="figcaption">Class Map</span></p>
 <p>几个类分别负责的事情：</p>
 <ul>
 <li><p>QDBusConnection：负责注册服务、注册对象；</p>
@@ -523,30 +523,30 @@ D-Bus 是 GNU/Linux 系统中的一种跨进程通讯（IPC）机制。本文介
                   <div class="post-list">
                     
                       <div class="post-list-item">
-                        <a href="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            Linux 内核启动流程梳理
-                          
-                        </a>
-                        <p class="post-date">2023-02-26</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2023/05/16/QQuickText-%E7%9A%84%E6%96%87%E5%AD%97%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            QQuickText 的文字渲染流程简单梳理
-                          
-                        </a>
-                        <p class="post-date">2023-05-16</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2021/09/16/%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E4%B8%8E%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6/" class="post-title">
+                        <a href="/2021/09/16/210916-cosine-and-euclidean-similarities/" class="post-title">
                           
                             余弦相似度与欧几里德相似度差异
                           
                         </a>
                         <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-activation-func-oneway-doubleway-satiation/" class="post-title">
+                          
+                            激活函数的「单向/双向饱和」及其影响
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-normalisation-and-standardise/" class="post-title">
+                          
+                            归一化 (Standardisation)、标准化 (Normalisation) 的区别
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
                       </div>
                     
                   </div>

@@ -16,7 +16,7 @@
 
 
 
-<title>激活函数的「单向/双向饱和」及其影响 | Han Li&#39;s Blog</title>
+<title>蚂蚁搬家进行中 | Han Li&#39;s Blog</title>
 
 
 
@@ -129,26 +129,26 @@
 
         <div class="post-cats hp-tag-list">
           <div class="hp-tag">
-            技术文档
+            随笔
           </div>
         </div>
       
 
       <div class="post-title">
         
-          激活函数的「单向/双向饱和」及其影响
+          蚂蚁搬家进行中
         
       </div>
       
         <div class="post-excerpt">
-          本文主要介绍 ReLU 函数能够取代 Sigmoid 作为激活函数的几个原因（主要是能够防止梯度消失及属于单向饱和）
+          请给我一点时间。
         </div>
       
 
       
       <div class="post-time-loc">
-        2021-09-25
-        09:54, 福建厦门
+        2023-06-03
+        15:27, 北京大钟寺
       </div>
     </div>
 
@@ -170,23 +170,10 @@
         <div class="post-content">
           
 
-  <p>一直以来自己对于 ML 模型中激活函数的概念和作用都比较模糊。</p>
-<p>今天阅读了一篇 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/172254089">知乎文章</a>，文章主要介绍了 ReLU 函数能够取代 Sigmoid 作为层与层之间的激活函数的几个原因，大致可总结为以下 2 点：</p>
-<ul>
-<li>ReLU 能够防止 Sigmoid 由于其梯度被限制在一个很小的区域（(0,0.25)）而导致的参数更新多层模型之间传播的梯度消失现象，以及</li>
-<li>ReLU 函数具有「<strong>单向饱和</strong>」的特点。</li>
-</ul>
-<p>「单向饱和」，也是 ReLU 比 Sigmoid 更适合作为层与层之间的激活函数的原因之一。</p>
-<blockquote>
-<p>Sigmoid 函数是双向饱和的，意思是朝着正负两个方向，函数值都会饱和；但 ReLU 函数是单侧饱和的，意思是只有朝着负方向，函数值才会饱和。严格意义上来说，将 ReLU 函数值为 0 的部分称作饱和是不正确的 (饱和应该是取值趋近于0)，但效果和饱和是一样的。</p>
-<p>单侧饱和有什么好处？让我们把神经元想象为检测某种特定特征的开关，高层神经元负责检测高级的&#x2F;抽象的特征 (有着更丰富的语义信息)，例如眼睛或者轮胎；低层神经元负责检测低级的&#x2F;具象的特征，例如曲线或者边缘。</p>
-<p>当开关处于开启状态，说明在输入范围内检测到了对应的特征，且正值越大代表特征越明显。假如某个神经元负责检测边缘，则（学习到的特征的）正值越大代表边缘区分越明显 (sharp)。</p>
-<p>那么负值越小代表什么意思呢？直觉上来说，用负值代表检测特征的缺失是合理的，但用负值的大小代表缺失的程度就不太合理，难道缺失也有程度吗？</p>
-</blockquote>
-<p>此外，虽然 ReLU 具有「单向饱和」的特点，它却容易产生「<strong>神经元死亡</strong>」的问题 —— 也就是 ReLU 的梯度决定了 ReLU 所作用的这一层神经元的参数的更新方向，在一次更新中，是朝着统一方向更新的（同时变大&#x2F;变小）。</p>
-<p>这使得有些不该变大&#x2F;变小的参数在某次更新中被迫变大&#x2F;变小，最终的结果是由于锯齿化的训练轨迹导致模型收敛变得缓慢。</p>
-<p>要解决「神经元死亡」，就必须让整个激活函数定义域内不能有某个方向趋向于 0。ReLU 的升级版 —— LeakyReLU 能够满足这一点。</p>
-<p>ELU 激活函数属于「集大成者」，它不但具有输出零均值分布（可以加快训练速度）的特点，而且是单向饱和的。</p>
+  <p>从去年年底以来，自己因为工作或个人原因，在个别方面进行了一定的知识积累，但是都没能及时同步到博客上。</p>
+<p>最近受某些因素的影响，每天能自己安排的时间暂时变得比以前多一些了。打算趁着这个机会做一些知识整理，顺便将旧博客上或其他地方曾经发过的文档收敛过来。</p>
+<p>附一张在我手机中难得一见的日落风景。<strong>要知道，我入职以来的一百来天中，能在天还亮时就离开公司的次数是仅用一双手就能数得清的</strong>。</p>
+<p><img src="/2023/06/03/230603-knowledge-migration/beijing-0602.jpg" alt="摄于 2023 年 6 月 2 日傍晚的中关村 (图片经压缩)"><span class="figcaption">摄于 2023 年 6 月 2 日傍晚的中关村 (图片经压缩)</span></p>
 
 
 
@@ -210,19 +197,6 @@
             
 
             
-              <div class="hp-pane post-toc-pane">
-                <div class="heading">标签</div>
-                <div class="body">
-                  <ul class="toc">
-                    
-                      <li class="toc-item">
-                        <a href="/tags/ML/">ML</a>
-                      </li>
-                    
-                  </ul>
-                </div>
-              </div>
-            
 
             
               <div class="hp-pane">
@@ -231,30 +205,12 @@
                   <div class="post-list">
                     
                       <div class="post-list-item">
-                        <a href="/2022/08/11/D-Bus-QtDBus/" class="post-title">
+                        <a href="/2023/03/18/230318-the-prologue/" class="post-title">
                           
-                            D-Bus &amp; QtDBus
-                          
-                        </a>
-                        <p class="post-date">2022-08-11</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            Linux 内核启动流程梳理
+                            The Prologue
                           
                         </a>
-                        <p class="post-date">2023-02-26</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2023/05/16/QQuickText-%E7%9A%84%E6%96%87%E5%AD%97%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            QQuickText 的文字渲染流程简单梳理
-                          
-                        </a>
-                        <p class="post-date">2023-05-16</p>
+                        <p class="post-date">2023-03-18</p>
                       </div>
                     
                   </div>

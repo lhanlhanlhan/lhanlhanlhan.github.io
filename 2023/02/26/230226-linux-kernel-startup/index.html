@@ -256,7 +256,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/guid.png"></p>
+<p><img src="/2023/02/26/230226-linux-kernel-startup/guid.png"></p>
 <h2 id="UEFI"><a href="#UEFI" class="headerlink" title="UEFI"></a>UEFI</h2><ul>
 <li><p>前面介绍，MBR 体系中，基本装载程序会到活动主分区的引导扇区中去读取高级装载程序，用高级装载程序来装入操作系统。这些由主板 BIOS 执行的、加载「高级装载程序」的流程，被称为老式引导（<strong>Legacy Boot</strong>）。</p>
 </li>
@@ -269,7 +269,7 @@
 </ul>
 <h2 id="高级装载程序的加载"><a href="#高级装载程序的加载" class="headerlink" title="高级装载程序的加载"></a>高级装载程序的加载</h2><p>Legacy Boot、UEFI 加载高级装载程序的做法有一定不同。下面以 Debian 的 GRUB 为例，介绍两种 Boot 方式从主板上电到加载出 GRUB 菜单的流程。</p>
 <h3 id="Legacy-Boot"><a href="#Legacy-Boot" class="headerlink" title="Legacy Boot"></a>Legacy Boot</h3><p>Legacy Boot 流程加载高级装载程序（以 Debian + GRUB 为例）的流程如下。</p>
-<p><img src="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/mbr.png"></p>
+<p><img src="/2023/02/26/230226-linux-kernel-startup/mbr.png"></p>
 <ul>
 <li><p>（Stage 1）主板上电后，BIOS 会进行自检。自检结束后，BIOS 会读取并执行 MBR 中的 Boot Loader。这时候便进入了 GRUB 的 Stage 1。</p>
 <ul>
@@ -292,12 +292,12 @@
 <li><p>（Stage 2）Stage 1.5 执行结束后，文件系统已经建立起来，可以通过路径来寻址。程序会读取 &#x2F;boot&#x2F;grub 下的 menu.lst 和 grub.conf，加载及显示 GRUB 菜单。这样，高级装载程序 GRUB 就完全启动起来了。</p>
 </li>
 </ul>
-<p><img src="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/grub.png"></p>
+<p><img src="/2023/02/26/230226-linux-kernel-startup/grub.png"></p>
 <p>(图片转载自 <a target="_blank" rel="noopener" href="https://blog.csdn.net/tiantianhaoxinqing__/article/details/123972845">Linux系统启动过程_linux启动过程_多云转晴，适合debug的博客-CSDN博客</a>)</p>
 <h3 id="UEFI-Boot"><a href="#UEFI-Boot" class="headerlink" title="UEFI Boot"></a>UEFI Boot</h3><p>在 UEFI Boot 模式下，BIOS 的行为会稍有复杂一些，会依次执行 SEC (安全阶段)、PEI (Pre-EFI 阶段)、DXE (执行驱动配置环境阶段)、BDS (启动设备选择) 等几个阶段，初始化整个 EFI 环境。</p>
-<p><img src="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/uefi.png"></p>
+<p><img src="/2023/02/26/230226-linux-kernel-startup/uefi.png"></p>
 <p>详细过程见下图（摘自 <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45895868/article/details/128559685">UEFI启动流程浅析_少时不识月0.的博客-CSDN博客</a>）：</p>
-<p><img src="/2023/02/26/Linux-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86/uefi-detail.png"></p>
+<p><img src="/2023/02/26/230226-linux-kernel-startup/uefi-detail.png"></p>
 <ul>
 <li><p>初始化 EFI 环境：主板上电后，BIOS 将进行自检（可选操作），然后将执行 ROM 中的 EFI 初始化。<strong>可以认为 EFI 环境就是一个非常迷你的</strong> <strong>OS</strong>，它扩展了 BIOS 的功能，使它可以识别 GPT 格式的磁盘，识别一定格式的文件系统，拥有鼠标等驱动，甚至还具有一个 Shell，可用于执行符合 UEFI 接口标准的应用程序（<strong>EFI 程序</strong>）。</p>
 </li>
@@ -443,30 +443,30 @@
                   <div class="post-list">
                     
                       <div class="post-list-item">
-                        <a href="/2022/08/11/D-Bus-QtDBus/" class="post-title">
-                          
-                            D-Bus &amp; QtDBus
-                          
-                        </a>
-                        <p class="post-date">2022-08-11</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2023/05/16/QQuickText-%E7%9A%84%E6%96%87%E5%AD%97%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E6%A2%B3%E7%90%86/" class="post-title">
-                          
-                            QQuickText 的文字渲染流程简单梳理
-                          
-                        </a>
-                        <p class="post-date">2023-05-16</p>
-                      </div>
-                    
-                      <div class="post-list-item">
-                        <a href="/2021/09/16/%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E4%B8%8E%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6/" class="post-title">
+                        <a href="/2021/09/16/210916-cosine-and-euclidean-similarities/" class="post-title">
                           
                             余弦相似度与欧几里德相似度差异
                           
                         </a>
                         <p class="post-date">2021-09-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-activation-func-oneway-doubleway-satiation/" class="post-title">
+                          
+                            激活函数的「单向/双向饱和」及其影响
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2021/09/25/210925-normalisation-and-standardise/" class="post-title">
+                          
+                            归一化 (Standardisation)、标准化 (Normalisation) 的区别
+                          
+                        </a>
+                        <p class="post-date">2021-09-25</p>
                       </div>
                     
                   </div>
