@@ -73,6 +73,7 @@ blockquote blockquote {
   max-height: 600px;
   max-width: 100%;
   width: auto;
+  padding-top: 12px;
 }
 dl dt {
   padding: $margin-m-0 0;
