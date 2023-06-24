@@ -554,7 +554,7 @@ input[type="search"]::-webkit-search-results-decoration {
   clear: both;
 }
 .hp-grid-row+.hp-grid-row {
-  margin-top: 30px;
+  margin-top: 10px;
 }
 .hp-grid-col,
 .hp-grid-col-half,
@@ -665,7 +665,12 @@ a:not(.hp-a-no-shader):focus>img {
 .mt-1 {
   margin-top: 1em;
 }
-.hp-input {
+label {
+  margin-bottom: 6px;
+  display: block;
+}
+.hp-input,
+.hp-textarea {
   border: 2px solid #333;
   padding: 4px 8px;
   -webkit-font-smoothing: antialiased;
@@ -680,10 +685,15 @@ a:not(.hp-a-no-shader):focus>img {
   -webkit-appearance: none;
   appearance: none;
 }
-.hp-input:focus {
+.hp-input:focus,
+.hp-textarea:focus {
   outline: 3px solid #fc0;
   outline-offset: 0;
   box-shadow: inset 0 0 0 2px;
+}
+.hp-textarea {
+  resize: vertical;
+  min-height: 120px;
 }
 .hp-button {
   font-weight: bold;
@@ -1618,46 +1628,31 @@ table.block-table th:last-child {
   margin-top: 1rem;
   color: #666;
 }
-.post-nav {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  word-wrap: break-word;
-  word-break: break-word;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.25rem;
-  color: #efefef;
+.post-footer {
+  margin-top: 24px;
 }
-.post-nav .prev-item {
-  display: flex;
-  text-align: left;
-  min-width: 50%;
-  align-items: center;
+ul.hp-comments {
+  list-style: none;
+  padding-inline-start: 0;
 }
-.post-nav .prev-item .arrow-left {
-  margin-right: 0.25rem;
+ul.hp-comments .hp-comm+.hp-comm {
+  padding-top: 12px;
 }
-.post-nav .next-item {
-  display: flex;
-  flex-direction: row-reverse;
-  text-align: right;
-  min-width: 50%;
-  align-items: center;
+.hp-comments>.hp-comm {
+  padding-top: 0.75rem;
+  align-items: top;
+  border-top: 1px solid #e8e8e8;
 }
-.post-nav .next-item .arrow-right {
-  margin-left: 0.25rem;
+.hp-comments>.hp-comm .name {
+  font-weight: bold;
+  display: inline;
 }
-.post-comment {
-  margin-top: 3.5rem;
+.hp-comments>.hp-comm .date {
+  display: inline;
+  color: #666;
 }
-.v[data-class="v"] .vsys {
-  display: none !important;
-}
-.vcontent p {
-  margin-top: 0 !important;
-  font-size: 0.875rem !important;
-  color: #333 !important;
+.hp-comments>.hp-comm p {
+  margin: 12px 0;
 }
 code {
   word-wrap: break-word;
@@ -2047,6 +2042,9 @@ hr {
   position: absolute;
   right: 0;
   top: 0;
+}
+.hp-commenter {
+  margin-bottom: 24px;
 }
 .browse-page-col {
   margin: 16px 0;

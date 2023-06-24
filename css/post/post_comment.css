@@ -1,11 +1,23 @@
-.post-comment {
-  margin-top: $margin-primary;
+ul.hp-comments {
+  list-style: none;
+  padding-inline-start: 0;
 }
-.v[data-class="v"] .vsys {
-  display: none !important;
+ul.hp-comments .hp-comm+.hp-comm {
+  padding-top: 12px;
 }
-.vcontent p {
-  margin-top: 0 !important;
-  font-size: $font-size-comment !important;
-  color: $color-text-primary !important;
+.hp-comments>.hp-comm {
+  padding-top: $margin-m-1;
+  align-items: top;
+  border-top: 1px solid $color-text-third;
+}
+.hp-comments>.hp-comm .name {
+  font-weight: bold;
+  display: inline;
+}
+.hp-comments>.hp-comm .date {
+  display: inline;
+  color: $color-text-secondary;
+}
+.hp-comments>.hp-comm p {
+  margin: 12px 0;
 }
