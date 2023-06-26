@@ -151,7 +151,6 @@ table.block-table td,
 table.block-table th {
   padding: 10px 20px 10px 0;
   border-bottom: $color-tbl-line solid $line-third;
-  text-align: left;
   display: table-cell;
 }
 table.block-table td:last-child,

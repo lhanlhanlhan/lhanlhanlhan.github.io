@@ -1586,7 +1586,6 @@ table.block-table td,
 table.block-table th {
   padding: 10px 20px 10px 0;
   border-bottom: #babcbd solid 1px;
-  text-align: left;
   display: table-cell;
 }
 table.block-table td:last-child,
@@ -1703,11 +1702,6 @@ td span {
 pre {
   margin: 0;
   overflow-x: auto;
-}
-table,
-td,
-th {
-  text-align: left;
 }
 table {
   border-collapse: collapse;
