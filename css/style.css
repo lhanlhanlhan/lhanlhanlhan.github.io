@@ -1705,11 +1705,21 @@ pre {
 }
 table {
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 }
-td,
 th {
   padding: 0.75rem;
+  word-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
+}
+td {
+  padding: 0.75rem;
+  word-wrap: break-word;
+  word-break: normal;
+}
+td>strong {
+  white-space: nowrap;
 }
 table,
 tboby,
