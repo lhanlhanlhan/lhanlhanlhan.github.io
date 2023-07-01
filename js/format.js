@@ -26,10 +26,59 @@ function detectCodeArea() {
   }
 }
 
+function detectImagesAndGeneratePreviews() {
+  let previewBlock = $('.hp-imgpreview');
+
+  if (!previewBlock.length) {
+    return;
+  }
+
+  function hidePreview() {
+    previewBlock.removeAttr("tabindex")
+    previewBlock.attr('hidden', 'true')
+  }
+
+  // add preview dismiss methods
+  previewBlock.keydown(function(event) {
+    if (event.keyCode === 27) {
+      hidePreview()
+    }
+  });
+  
+  previewBlock.click(function(event) {
+    if ($(event.target).hasClass("hp-imgpreview")) {
+      console.log("您点击了父元素！");
+      hidePreview()
+    }
+    // 阻止事件冒泡
+    event.stopPropagation();
+  })
+
+  // detect image blocks for which we generate a preview page for it
+  $('.post-content img').each(function(ii, img) {
+    if (!img.src) return;
+
+    $(this).click(function() {
+      previewBlock.attr("tabindex", "0")
+      previewBlock.removeAttr('hidden')
+      previewBlock.focus()
+      $('.hp-imgpreview a').attr('href', img.src).click(function(event) {
+        event.preventDefault();
+        if (img.src) {
+          window.open(img.src, "newWindow", "width=800,height=600");
+        }
+      });
+      $('.hp-imgpreview .prev-img').attr('src', img.src)
+    })
+  })
+}
+
+
 function detectors(){
   detectTaskList();
   detectBlockTable();
   detectCodeArea();
+  detectImagesAndGeneratePreviews();
 }
 
 
