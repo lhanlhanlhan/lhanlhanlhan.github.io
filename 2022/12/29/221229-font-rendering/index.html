@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>数字化的活字印刷术 (下) - 字形渲染 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            技术文档
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          数字化的活字印刷术 (下) - 字形渲染
+        
+      </div>
+      
+        <div class="post-excerpt">
+          近期对 Linux 系统通用的文本显示流程进行了一些梳理，积累一些与文字渲染相关的知识基础。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-12-29
+        16:38:
+          海淀, 北京
+        
+      </div>
+    </div>
+
+    
+      <div class="hp-grid-col-one-third row-elem">
+        <img src="cover.jpg" alt="Pinned Photo" class="post-pinned-img"/>
+      </div>
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <p>本文为系列 “数字化的活字印刷术” 的下篇。在本系列上篇《<a href="2022/12/29/221229-font-intro">字体基础知识</a>》中，介绍了：</p>
+<ul>
+<li>排印技术的简要历史；</li>
+<li>字体相关基本名词及基本过程。</li>
+</ul>
+<p>本文将继续介绍下列内容：</p>
+<ul>
+<li>以一个内存中的字符串从其初始状态（字符数组）到最终上屏显示的完整过程，来展现字体格式、Linux 系统字体管理机制及一般的文本渲染方式；</li>
+<li>穿插介绍与排版、印刷、字体、字体渲染有关的一些常见概念。</li>
+<li>使用字体的合法合规性。</li>
+</ul>
+<h1 id="字型渲染一般过程"><a href="#字型渲染一般过程" class="headerlink" title="字型渲染一般过程"></a>字型渲染一般过程</h1><p>Linux 系统中，字型渲染是一个系统性工作，从上至下涉及 <strong>系统字体管理机制、字体渲染库、图形子系统、图形驱动程序</strong> 等多个组件的联动。</p>
+<p><img src="/2022/12/29/221229-font-rendering/1-rendering-stack.png" alt="字体渲染技术栈"><span class="figcaption">字体渲染技术栈</span></p>
+<ul>
+<li>系统字体管理机制：用于管理系统中的字体文件、检索字体。</li>
+<li>字体渲染库：在屏幕上摆放文字的位置，并将矢量字形在 <strong>RAM&#x2F;显存</strong> 中绘制 <strong>位图</strong>，并通知 <strong>图形子系统</strong> 从内存中对应的地方取到绘制的 <strong>位图</strong> 并拿去上屏。</li>
+<li>图形子系统：（KWin 或 X Server）将上层绘制的字形通过 <strong>图形驱动程序</strong> 显示到屏幕上。</li>
+<li>图形驱动程序：与图形卡进行通讯的组件。<br>文字最终上屏是由 <strong>图形子系统、图形驱动程序</strong> 实现的，这两个组件与底层实现相关，它们并不知道绘制的文本是什么、长什么样，也并不具体影响字体的形状，只负责显示。<br>本文只介绍 <strong>系统字体管理机制</strong> 和 <strong>字体渲染库</strong> 两个组件。</li>
+</ul>
+<h2 id="Linux-系统字体渲染过程简图"><a href="#Linux-系统字体渲染过程简图" class="headerlink" title="Linux 系统字体渲染过程简图"></a>Linux 系统字体渲染过程简图</h2><p><img src="/2022/12/29/221229-font-rendering/2-rendering-process.png" alt="一段文本 &quot;Ocean&quot; 从其字符串形式到位图的过程"><span class="figcaption">一段文本 &quot;Ocean&quot; 从其字符串形式到位图的过程</span></p>
+<p>一段文本从字符串到位图的转变，主要分为 找字、排版、渲染 三大步骤。<br>这三个步骤在 Linux 下一般分别由 Fontconfig、FriBidi&#x2F;LibICU + HarfBuzz、FreeType 三个组件来完成。</p>
+<h2 id="1-找字：Fontconfig"><a href="#1-找字：Fontconfig" class="headerlink" title="1. 找字：Fontconfig"></a>1. 找字：Fontconfig</h2><p>Linux 的 <strong>字体</strong> 及 字体配置 由 Fontconfig 套件管理。Fontconfig 的主要功能是：根据应用程序对字体的要求，在字库数据库中尽量匹配并输出一种字体，并指导字体的显示效果。</p>
+<h3 id="Fontconfig-的模块功能划分"><a href="#Fontconfig-的模块功能划分" class="headerlink" title="Fontconfig 的模块功能划分"></a>Fontconfig 的模块功能划分</h3><p>按照功能划分，Fontconfig 套件包括包括两个模块：</p>
+<ul>
+<li>配置模块：用来读取 Fontconfig 配置文件，建立匹配规则</li>
+<li>匹配模块：根据匹配规则来匹配与应用程序需求最相近的字体（扫描字体、查询字体、读取字体信息），并输出字体的信息、指导字体的显示效果（只能说指导，因为具体的显示由Xft、Freetype等说了算）。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-rendering/3-fc.png" alt="Fontconfig 找字流程"><span class="figcaption">Fontconfig 找字流程</span></p>
+<h3 id="Fontconfig-使用流程"><a href="#Fontconfig-使用流程" class="headerlink" title="Fontconfig 使用流程"></a>Fontconfig 使用流程</h3><p>我们使用 Fontconfig 的主要流程是：</p>
+<ol>
+<li>前期准备：读配置文件、扫描字体库</li>
+<li>匹配字体：App 输入查询字符串，由 Fontconfig 从字体缓存中匹配字体。<br>匹配字体的算法类似于搜索算法中对特征向量进行的相似度计算，并且这种算法能保证总是能匹配到一个字体。<br>具体地，例如 Fontconfig 在查询哪个字体是 “宋体” 时，会对系统中每一个字体生成一个 “特征码”，通过一定方式计算这个 “特征码” 与查询的 “特征码” 的 相似度，然后采纳其中相似度最大的字体作为匹配字体。<br>字体匹配的过程与当前的语言环境设置 (LOCALE, LC_* 环境变量) 有关。不同语言环境会造成不一样的字体匹配效果。<br>在 fontconfig 中库函数 FcFontSort、FcFontMatch 都能实现这一需求，区别是 FcFontSort 能返回整个字体集的匹配度排序，而 FcFontMatch 只找到匹配度最高的那个字体。详细过程分析会在其他文章中更新。</li>
+<li>输出匹配的字体。</li>
+</ol>
+<p>Fontconfig 使用流程图：<br><img src="/2022/12/29/221229-font-rendering/4-fc-match.jpg"></p>
+<h3 id="Fontconfig-的配置文件"><a href="#Fontconfig-的配置文件" class="headerlink" title="Fontconfig 的配置文件"></a>Fontconfig 的配置文件</h3><p>从流程可以看到，事实上，Fontconfig 匹配过程中的每一步行为都可以通过配置文件来定义 —— 配置文件能影响 Fontconfig 输出的匹配过程和匹配结果。同时，Fontconfig 的匹配结果又会包含字体渲染的一些参数，因此也会影响到字体渲染的效果。<br>配置文件是 Fontconfig 的核心。我们可以通过自定义 Fontconfig 配置文件，来诱导 Fontconfig 选择正确的字体，以此满足对字体选择、渲染过程的定制需求。<br>Fontconfig 会首先加载 &#x2F;etc&#x2F;fonts&#x2F;fonts.conf 文件。该文件是所有配置文件的起点，不应被修改&#x2F;删除。<br>&#x2F;etc&#x2F;fonts&#x2F;fonts.conf 文件又引入了 &#x2F;etc&#x2F;fonts&#x2F;conf.d 目录下的配置文件。当系统中安装了新的字体包（比如 fonts-noto-cjk）时，会往这个目录中写入字体包的配置文件。</p>
+<p><img src="/2022/12/29/221229-font-rendering/5-font-path.png"></p>
+<p>Fontconfig 配置文件采用 XML 格式编写，可定义以下 3 种内容：</p>
+<ul>
+<li>目录配置 - 配置字体文件、其他配置文存放的位置 (<code>&lt;dir&gt;</code>, <code>&lt;cachedir&gt;</code>, <code>&lt;include&gt;</code>)</li>
+<li>重写行为配置 - 配置查询前对查询字符串的修饰，以及找到字体后的对查询结果的修饰 (<code>&lt;match&gt;</code>)</li>
+<li>杂项配置 - 定义空白字符、重新扫描字体库的时间间隔等 (<code>&lt;config&gt;</code>)<br>之后会有文章专门介绍 Fontconfig 的配置文件。</li>
+</ul>
+<h3 id="在程序中使用-Fontconfig"><a href="#在程序中使用-Fontconfig" class="headerlink" title="在程序中使用 Fontconfig"></a>在程序中使用 Fontconfig</h3><p>Fontconfig 是函数库，应用程序大都是通过静态链接 libfontconfig 来引入查询、匹配字体的能力。</p>
+<p>使用 Qt、GTK+、Skia 等 GUI 框架进行开发时，这些框架会隐藏字体匹配的细节。事实上，这些框架在底层都是透过 libfontconfig 提供的 API 来匹配字体的。例如，Qt 中调用 libfontconfig 查找系统默认字体的实现是：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/qt/qtbase/blob/dev/src/gui/text/unix/qfontconfigdatabase.cpp#L976"><code>void QFontconfigDatabase::setupFontEngine</code></a></li>
+</ul>
+<p>不同 GUI 框架根据其需求，可能会对 libfontconfig 进行定制。所以即使是在同一个系统环境下，并不是所有 Linux App 都能用同一个查询匹配出唯一的字体。</p>
+<p>比如，Chromium 源码中包含针对 libfontconfig 的定制，会自己管理字体缓存，同时由于其沙盒机制可能导致 libfontconfig 读不到系统的字体配置文件 (fonts.conf)。因此，浏览器可能会无视系统的默认字体配置，同时 Web 页面通过 “Sans Serif” 匹配到字体与 Qt 程序匹配的 “Sans Serif” 字体可能未必一致。</p>
+<p>相比之下，Qt 框架和 FireFox 浏览器都未有对 libfontconfig 进行大量修改，两者匹配字体的逻辑是相似的，都会遵循系统配置文件。因此，Web 页面通过 “Sans Serif” 匹配到字体与 Qt 程序匹配的 “Sans Serif” 字体是一致的。</p>
+<h2 id="2-排版：FriBidi-LibICU、HarfBuzz"><a href="#2-排版：FriBidi-LibICU、HarfBuzz" class="headerlink" title="2. 排版：FriBidi&#x2F;LibICU、HarfBuzz"></a>2. 排版：FriBidi&#x2F;LibICU、HarfBuzz</h2><p>找到字体后，需要从字体中选取出对应于字符串 “Ocean” 的一系列正确的字形，才能被渲染器渲染出来，这个过程是排版。排版的需求比较清晰，就是根据文字的书写习惯，将字符串按从左到右或从右到左的顺序进行重组，然后像活字印刷一样从字体文件中挑选 “活字” 也就是字形。</p>
+<p>排版一般分为两个子过程：字符顺序重排（FriBidi、LibICU 完成）、字形选取（由 HarfBuzz 库完成）。FriBidi&#x2F;LibICU、HarfBuzz 都是函数库，被封装在 FreeType、Skia、Qt 等组件中。</p>
+<h3 id="字符顺序重排（FriBidi、LibICU）"><a href="#字符顺序重排（FriBidi、LibICU）" class="headerlink" title="字符顺序重排（FriBidi、LibICU）"></a>字符顺序重排（FriBidi、LibICU）</h3><p>人类语言文字的书写顺序主要分为从左往右（中、英文等）和从右往左（阿、希伯来等清真语言）两种。现在广泛使用的 Unicode 文本中可能混杂有这两种方向的文字片段，例如：</p>
+<p><img src="/2022/12/29/221229-font-rendering/6-bidi.png"></p>
+<p>Unicode 提出了双向字符排布法（Unicode Bidirectional Algorithm，bidi）是用来解决双向文字混排问题的事实标准。标准规定，英文、阿拉伯语这样混合的字符串在计算机中存储时使用的逻辑格式为 english ARABIC text，即无视文字顺序，统一从左到右排布存储；显示时，会将阿拉伯语字符串倒转过来，即显示为 english CIBARA text。<br>FriBidi、LibICU 是 bidi 排布标准的实现。将逻辑格式的字符串作为它们的输入，可得到其在多语言环境下的正确排布顺序。</p>
+<h3 id="字形选取（HarfBuzz）"><a href="#字形选取（HarfBuzz）" class="headerlink" title="字形选取（HarfBuzz）"></a>字形选取（HarfBuzz）</h3><p>HarfBuzz 主要完成字形的选取，其工作过程类似活字印刷时代的 “制版”。技术上，HarfBuzz 主要将 Unicode 字符串中各字符的 码点（codepoint）映射到其字形在字体文件中的索引（glyph index）。</p>
+<p><img src="/2022/12/29/221229-font-rendering/7-harfbuzz.png"></p>
+<p>直观例子：</p>
+<ul>
+<li><code>Hello, world!</code> 在 Ubuntu Mono 字体中对应的字形索引为 <code>43 72 79 79 82 15 3 90 82 85 79 71</code>。</li>
+<li>不同字体文件中，同一个字符对应字形的位置可能不同。例如，-&gt; 在 Ubuntu Mono 字体中对应的字形索引为 <code>16 33</code>，而在 Fira Code Retina 字体中对应的字形索引为 <code>1603 1064</code>。</li>
+</ul>
+<h2 id="3-渲染：FreeType"><a href="#3-渲染：FreeType" class="headerlink" title="3. 渲染：FreeType"></a>3. 渲染：FreeType</h2><p>当我们有了字体文件、字形索引，以及 Fontconfig 提供的渲染指引，就可以开始将字符串画出来了。</p>
+<p>FreeType 是开源软件中大量使用的渲染库，它的主要职责是：</p>
+<ul>
+<li>读取并解析字体文件；</li>
+<li>将一串 字型索引 根据一系列 渲染参数（如是否执行反锯齿、采用何种反锯齿种类）绘制成位图。</li>
+</ul>
+<p>Qt、Skia、GTK+ 底层都使用 FreeType 库来进行字体文件读取，大多数场合也都采用 FreeType 来进行自行绘制。</p>
+<p><img src="/2022/12/29/221229-font-rendering/8-freetype.png"></p>
+<p>使用 FreeType 进行矢量字体的文本绘制一般遵循以下步骤 (鉴于现在使用的字体大都是 <strong>矢量字体</strong>，本文后面阐述的字体概念都是针对矢量字体定义的)。</p>
+<p><img src="/2022/12/29/221229-font-rendering/9-ft-process.png"></p>
+<h3 id="1-解析字体文件"><a href="#1-解析字体文件" class="headerlink" title="1. 解析字体文件"></a>1. 解析字体文件</h3><p>历史上，矢量字体文件的标准不多，成气候的不外乎以下几种。</p>
+<ul>
+<li><strong>Type 1 字体</strong>。又称 PostScript 字体，是 Adobe 开发的、基于 PostScript 语言描述的高质量字体，适合印刷特别是专业印刷（如书籍和杂志）使用。<ul>
+<li>Type 1 字体会通过两个文件分发，一个文件专门描述屏幕上显示的位图字形，另一个文件专门描述打印时采用的矢量字形，二者在分发的时候就保证高度一致，因此在显示屏上看到的形状与打印出来的形状完全相同。</li>
+<li>Type 1 是较老的印刷字体格式。该格式在印刷业历史悠久，许多企业已在 PostScript 格式字体上投资大量资源，因此其在短期内还不会完全被 TrueType 替代。</li>
+</ul>
+</li>
+<li><strong>TrueType 字体</strong>：是由 Apple 和微软公司共同开发的一种电脑轮廓字体类型标准，后缀是 TTF。这种格式中的字符轮廓由直线和二次贝塞尔曲线片段构成。<ul>
+<li>TrueType 字体可同时用于屏幕显示及打印，并且显示及打印共用一个字形，因此在显示屏上看到的形状与打印出来的形状也是完全相同的。<blockquote>
+<p>TrueType 格式和 PostScript 格式使用的字形标记方式有些微区别。</p>
+<ul>
+<li>TrueType 使用的曲线是二次B-样条曲线（quadratic B-splines），PostScript 使用的是三次贝塞尔曲线（cubic Bézier）。</li>
+<li>数学上说，TrueType 的曲线是 PostScript 的子集，二者的表现性几乎一致，但是相互转化时容易出现数据损失。网络上多数 TrueType 格式字体是从其原生 PostScript 格式重新拟合而来的，拟合过程中出现数据损失，因此效果一般不如其原生 PostScript 格式。<br>TrueType 格式相对于 PostScript 而言，支持更完善的 字形微调 功能。字体出版商可以在 TrueType 中定义字形在几乎任何情况下的显示效果。相反，PostScript 字体的字形微调是由 Adobe 的栅格化程序自动执行的，其显示、打印效果取决于 Adobe 的实现。</li>
+</ul>
+</blockquote>
+</li>
+<li>TrueType 格式有 Apple 和 Microsoft 两种格式，之间有细微不同，这意味着在 macOS 上能用的 TrueType 格式字体不一定能在 Windows 上 100% 可用。</li>
+</ul>
+</li>
+<li><strong>OpenType 字体</strong>：由微软公司和 Adobe 联合开发用来延伸、替代 TrueType 的新字体，扩展名有 OTF、TTF、TTC 等。可以说 OpenType 是 TrueType 的超集（但并不完全是）。<ul>
+<li>可以说 OpenType 是 Type 1 和 TrueType 的超集：这种格式中的字形轮廓数据可以是 TrueType 格式的轮廓，也可以是基于 PostScript 格式的轮廓。</li>
+<li>OpenType 提供更多功能：小型大写字母、Old-fasion 数字、多语言连字 及 替换字符等。同时，OpenType 在 macOS 和 Windows 下的格式一致，不必进行转换就能进行字体分发。</li>
+</ul>
+</li>
+<li><strong>WOFF 字体</strong>：在 Web 页面上，如果有需要展示用户电脑上没有安装的字体，我们一般不直接使用 TTF、OTF 字体文件来展示，而使用 Mozilla 组织开发的 Web 字体标准格式 WOFF、WOFF2 （Web Open Font Format）来分发字体。<ul>
+<li>使用 WOFF 的主要原因是 文件尺寸。WOFF、WOFF2 文件使用经过 zlib 压缩，比原本 TTF 文件尺寸可缩小达 40% 以上，适合在网络上传播。</li>
+<li>WOFF2 比 WOFF 压缩得更彻底。</li>
+<li>并且如果通过网络直接分发 TTF、OTF 文件，可能面临法律纠纷。<br>FreeType 绘制字形第一个步骤就是解析字体文件。对于 TrueType、OpenType 字体文件，FreeType 会按照 SFNT 格式的约定来读取它们。</li>
+</ul>
+</li>
+</ul>
+<p>前面提到的 <strong>SFNT 包装格式</strong> 是 Apple 为 TrueType 开发的一种字体文件格式。现在这种格式已经被广泛采用为通用的字体格式标准，除了 TrueType、OpenType，WOFF 也采用这种包装格式。</p>
+<p>后面会专门做一篇文章，对 SFNT 包装格式的内部结构进行简要说明。</p>
+<h3 id="2-载入字符并进行变形"><a href="#2-载入字符并进行变形" class="headerlink" title="2. 载入字符并进行变形"></a>2. 载入字符并进行变形</h3><p>矢量字体的字形是以连续且闭合的曲线存储及表达的。这些字形点列表的形式存放在 TrueType 字体的 ‘glyf’ 表中。<br>字形中连续且闭合的曲线被称为 轮廓 (Contour &#x2F; Outline)。一个字形中，可能有好几个轮廓。比如 Helvetica 字体中的字符 ‘O’ 中就有两个轮廓。</p>
+<p><img src="/2022/12/29/221229-font-rendering/10-glyph.png"></p>
+<p>TrueType 字形中的轮廓是以若干个首尾相连的 直线 或者 圆锥贝塞尔曲线 (Conic Bézier Arc) 构成的。例如上面的字符 ‘O’ 中，轮廓 1、轮廓 2 都分别以 8 条圆锥贝塞尔曲线首尾相接构成。</p>
+<p>一条圆锥贝塞尔曲线由两个端点 (On Point) 和一个控制点 (Off Point) 构成。其中，两个端点控制曲线的位置，而控制点则定义了曲线的曲率。</p>
+<p>数学上可以证明，只要连续的两个 控制点 能够连成一条直线，则在这两个控制点之间夹着的那个端点处就是 连续 的。TrueType 字体中可以利用这样的特性，通过若干条相接的贝塞尔曲线，来拟合一条连续且流畅的 <strong>任意曲线</strong>。</p>
+<p><img src="/2022/12/29/221229-font-rendering/11-b.png"></p>
+<p>贝塞尔曲线不是本文的重点，可以透过以下连接浏览详情。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-gb/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/beziers">介绍</a></li>
+<li><a target="_blank" rel="noopener" href="https://math.hws.edu/eck/cs424/notes2013/canvas/bezier.html">一个帮助理解贝塞尔曲线的 Web 页面</a></li>
+</ul>
+<p>SFNT 格式通过 轮廓指针列表、x 坐标列表、y 坐标列表、点类型 (flag) 列表 共 4 个列表来存储一个字符数据，详细可参考 <a target="_blank" rel="noopener" href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6glyf.html">Apple 的官方解释</a>。</p>
+<p>载入字符后，FreeType 可以根据需要对读取到的字形进行曲线层面的 变形，例如变扁、变瘦、旋转或缩放等。</p>
+<h3 id="3-计算-Kerning"><a href="#3-计算-Kerning" class="headerlink" title="3. 计算 Kerning"></a>3. 计算 Kerning</h3><p>间距微调（Kerning）指的是排版时调整字符间距的操作：</p>
+<p><img src="/2022/12/29/221229-font-rendering/12-kerning.png"></p>
+<p>在绘制字体前，按照上一个已经绘制的字形的形状，适当往前移动 Pen Position (笔位置，即开始绘制字形的位置)。<br>大写字母的 Kerning Pairs 有 AV、AW、AY、WA、YA、LY、LW 等。</p>
+<h3 id="4-绘制字符"><a href="#4-绘制字符" class="headerlink" title="4. 绘制字符"></a>4. 绘制字符</h3><p>得到字符的轮廓数据后，FreeType 将绘制字形。</p>
+<p>首先要解决 “在哪绘制” 的问题。</p>
+<ul>
+<li>通常，调用 FreeType 的程序会把 “需要绘制文字的那块屏幕区域” 与 “RAM 中的一块空间 (Buffer)” 联系在一起。这样对 Buffer 进行修改，就相当于对屏幕上的那块区域进行修改。</li>
+<li>上述联系建立后，调用 FreeType 的程序会把 Buffer 在 RAM 中的位置及尺寸告诉 FreeType，然后 FreeType 就开始进行绘制。</li>
+<li>通常不会让 FreeType 自己管理内存，因此它不知道 Buffer 从哪儿来，也不知道 Buffer 去哪里 - 它只管在 Buffer 中绘制字形，剩下的事情都是 调用 FreeType 的程序 来完成的。</li>
+</ul>
+<p>得到 Buffer 后，绘制过程是比较直观的，但是涉及两个关键的渲染领域技术 —— 微调和反锯齿。</p>
+<ul>
+<li>首先，FreeType 会将字形摆放要显示的像素格子中 (Grid-Fitting)。<ul>
+<li>如果字符中包含 微调 (Hinting) 指令，会根据微调指令调整轮廓。</li>
+</ul>
+</li>
+<li>然后，FreeType 从上至下，一行一行像素进行填色。<ul>
+<li>如果开启了 反锯齿模式 (Anti-Alias Mode)，填色的深度会根据轮廓在像素上的覆盖率来安排。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-rendering/13-hinting.png"></p>
+<p>上面提到的 微调 (Hinting) 和 反锯齿模式 (Anti-Alias Mode) 都是用来对付低清显示器的两项技术。</p>
+<p><strong>微调 (Hinting)</strong> 指的是对字形进行栅格化时，对字形本身进行微调以适应分辨率等环境因素。微调可以保证字形中的 关键笔画 在低清环境下也能被清楚显示。对字形进行微调通常是由渲染器自动进行的。</p>
+<ul>
+<li>显式微调：这是 TrueType 的一个功能。TrueType 的每个字形都有一个 “指令列表”，其中放置与该字体相关的 渲染指令 (instructions)。渲染指令可以实现字体按照出版商的意愿进行微调。<ul>
+<li>久经考验的经典字体如 Times New Roman、Helvetica 的字型微调指令都是人肉编写 (后面专门会有文章介绍渲染指令)。这样编写出来的指令理论上能渲染出最理想效果，但是弊端非常明显：人工微调的步骤 极端繁琐，缺乏生产工具，难度并不亚于直接编写机器语言程序 - 只有少数业内专家掌握这一技能。</li>
+<li>现在，一些专业字体编辑软件可以根据字形，用算法自动识别微调需求，自动形成一部分微调指令。字体编辑人士只需要修改少量指令就能实现，可以以此减少工作量。</li>
+</ul>
+</li>
+<li>隐式微调：PostScript 字体 (Type 1, CFF, CFF2) 的微调方法比较简单。不用人工编写复杂的指令，只需在设计字体时，在字型中标出一定要绘制清楚的关键笔画。渲染器会决定如何就这些关键笔画进行微调，因此不同渲染器微调出来的效果可能不同。</li>
+<li>自动微调：现在许多 TrueType 字体都不内置微调指令。这些字体可以通过 “自动微调” 机制来进行微调。渲染器在绘制字体时，会利用 auto-hinter 来 “猜测” 要执行哪些微调操作。</li>
+</ul>
+<p><strong>中文字形微调</strong> </p>
+<ul>
+<li>汉字数量巨大，为 GB18030 的所有汉字编写微调指令是不可能短时间完成的事情。许多中文 TrueType 字体都不内置微调指令，所有微调操作都由渲染器自动进行。</li>
+<li>另一方面，在屏幕分辨率越来越高的背景下，微调的重要性已经没有过去那么高了。即便是在低清显示器上，多数情况下，许多渲染器也已经能够实现良好的自动微调效果。因此，现在人肉编写微调指令已经没有过去那么有必要了。</li>
+</ul>
+<p>**反锯齿模式 (Anti-alias Mode)**：指的是在低清显示器下对字形边缘进行打磨的过程，常和字形微调一起使用，提升可读性。如果没有开启反锯齿或反锯齿强度不够，在低清显示器上常出现字体显示得太细或者不清晰。</p>
+<p><img src="/2022/12/29/221229-font-rendering/14-antialias.png"></p>
+<p><strong>次像素渲染（sub-pixel rendering）</strong>：是一种在 LCD、OLED 屏上实施抗锯齿的方式。该技术利用 LCD 屏中每个像素都是由 RGB 三色显像管（三个次像素）构成的这一特性，在字的边缘，显示不同亮度的 R、G 或 B 像素 (次像素)，以对处于边缘的像素进行彩色补足，来增强字体边缘的层次及柔和感。</p>
+<p>下图中从上到下、从左到右依次展现了以下处理效果：无处理、用完整像素来抗锯齿、用灰度来抗锯齿、用次像素来抗锯齿。用完整像素来抗锯齿的场合中，用于补足边缘的 R、G、B 显像管是以完整亮度显示的，虽然锯齿是补上了，但整体并不柔和。</p>
+<p><img src="/2022/12/29/221229-font-rendering/15-antialias-and-subpixel.png"></p>
+<h3 id="5-移动-Pen-Position-到下一位置"><a href="#5-移动-Pen-Position-到下一位置" class="headerlink" title="5. 移动 Pen Position 到下一位置"></a>5. 移动 Pen Position 到下一位置</h3><p><img src="/2022/12/29/221229-font-rendering/16-pencel-move.png" alt="当一个字符绘制完成后，“Pen Position” 会移动到下一位置，然后循环本段第一部分绘制后边的字符，直到绘制结束"><span class="figcaption">当一个字符绘制完成后，“Pen Position” 会移动到下一位置，然后循环本段第一部分绘制后边的字符，直到绘制结束</span></p>
+<h1 id="使用字体的合法合规性"><a href="#使用字体的合法合规性" class="headerlink" title="使用字体的合法合规性"></a>使用字体的合法合规性</h1><p>字体是科学和艺术作品，也是《著作权法》规定的美术作品的范畴。与大多数软件一样，字体具有使用合规性的限制，也有开源和商业字体之分。每个字体都有与之相关联的 许可证 (License)，并且在任何使用之前都必须取得许可证。</p>
+<ul>
+<li>商业字体：使用之前必须 获取许可证 (Licensing)。许可证种类繁多，限制比较广。</li>
+<li>免费&#x2F;开源字体：允许在许可证范围内免费分发，并且允许任意未经修改的使用。<ul>
+<li>开源字体可以在任何用途 (商业、非商业) 中不修改使用，但是在分发字体的方式上可能有具体的限制。</li>
+<li>大多数开源字体一般遵循 SIL Open Font License 许可证，允许字体与商业软件捆绑销售分发；但是具有传染规则，即以该协议的字体为蓝本修改的字体文件也必须遵循 SIL OFL 协议。</li>
+<li>少数字体遵循其他开源协议如 Apache License、GPL。<br>每个字体都有与之相关联的 许可证 (License)，定义了两种内容：</li>
+</ul>
+</li>
+<li>Volume (数量) - 字体能够安装到的设备的数量，能够接受的网站访问量等。</li>
+<li>Kind of Usage (使用方式) - 商业许可证一般限定了字体能被分发的方式，包括但不限于：<ul>
+<li>有的字体可能限制只能随着操作系统分发 (比如微软雅黑)；</li>
+<li>有的字体可能定义只能用在该操作系统中，以及使用该操作系统生产的文档中 (比如 “苹方” 字体)；</li>
+<li>有的字体可能限制了向 App 中嵌入字体 (比如方正系列的字体)<br>在中国的法律实践中，字体侵权案件一般采用衡量 “文字变形是否超过 50%” 方式来界定违法事实是否存在。一般收费字体在未购买版权的情况下用于商业用途，且 变形较少或无变形，即涉及侵权。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><strong>北大方正诉上海跃兴旺、家乐福案</strong></p>
+<p>北大方正公司于 2000 年创作完成了方正平和体（共计 9748 个单字），并进行了美术作品版权登记。跃兴旺公司在多款产品外包装上最显著的位置，使用大号字体突出使用方正平和体的“自”、“然”、“之”、“子”4个字形，家乐福公司销售了上述产品。</p>
+<p>法院认定，“自”、“然”、“子”三个字与北大方正公司的方正平和体“自”“然”“子”三个字相比，三个字的字形设计（各个笔画布局）和整体设计风格 基本相同，侵犯了北大方正公司就其方正平和体享有的复制权、发行权和修改权，判赔2.5万元。</p>
+</blockquote>
+
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">目录</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%97%E5%9E%8B%E6%B8%B2%E6%9F%93%E4%B8%80%E8%88%AC%E8%BF%87%E7%A8%8B"><span class="toc-text">字型渲染一般过程</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux-%E7%B3%BB%E7%BB%9F%E5%AD%97%E4%BD%93%E6%B8%B2%E6%9F%93%E8%BF%87%E7%A8%8B%E7%AE%80%E5%9B%BE"><span class="toc-text">Linux 系统字体渲染过程简图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%89%BE%E5%AD%97%EF%BC%9AFontconfig"><span class="toc-text">1. 找字：Fontconfig</span></a><ul class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Fontconfig-%E7%9A%84%E6%A8%A1%E5%9D%97%E5%8A%9F%E8%83%BD%E5%88%92%E5%88%86"><span class="toc-text">Fontconfig 的模块功能划分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Fontconfig-%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="toc-text">Fontconfig 使用流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Fontconfig-%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">Fontconfig 的配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E7%A8%8B%E5%BA%8F%E4%B8%AD%E4%BD%BF%E7%94%A8-Fontconfig"><span class="toc-text">在程序中使用 Fontconfig</span></a></li></ul></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%8E%92%E7%89%88%EF%BC%9AFriBidi-LibICU%E3%80%81HarfBuzz"><span class="toc-text">2. 排版：FriBidi&#x2F;LibICU、HarfBuzz</span></a><ul class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E9%A1%BA%E5%BA%8F%E9%87%8D%E6%8E%92%EF%BC%88FriBidi%E3%80%81LibICU%EF%BC%89"><span class="toc-text">字符顺序重排（FriBidi、LibICU）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E5%BD%A2%E9%80%89%E5%8F%96%EF%BC%88HarfBuzz%EF%BC%89"><span class="toc-text">字形选取（HarfBuzz）</span></a></li></ul></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%B8%B2%E6%9F%93%EF%BC%9AFreeType"><span class="toc-text">3. 渲染：FreeType</span></a><ul class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%A7%A3%E6%9E%90%E5%AD%97%E4%BD%93%E6%96%87%E4%BB%B6"><span class="toc-text">1. 解析字体文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%BD%BD%E5%85%A5%E5%AD%97%E7%AC%A6%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%8F%98%E5%BD%A2"><span class="toc-text">2. 载入字符并进行变形</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%AE%A1%E7%AE%97-Kerning"><span class="toc-text">3. 计算 Kerning</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%BB%98%E5%88%B6%E5%AD%97%E7%AC%A6"><span class="toc-text">4. 绘制字符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E7%A7%BB%E5%8A%A8-Pen-Position-%E5%88%B0%E4%B8%8B%E4%B8%80%E4%BD%8D%E7%BD%AE"><span class="toc-text">5. 移动 Pen Position 到下一位置</span></a></li></ul></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%AD%97%E4%BD%93%E7%9A%84%E5%90%88%E6%B3%95%E5%90%88%E8%A7%84%E6%80%A7"><span class="toc-text">使用字体的合法合规性</span></a></li></ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">标签</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Linux/">Linux</a>
+                      </li>
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Fonts/">Fonts</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">发现</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-intro/" class="post-title">
+                          
+                            数字化的活字印刷术 (上) - 字体基础知识
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/05/16/230516-qquicktext-text-rendering/" class="post-title">
+                          
+                            QQuickText 的文字渲染流程简单梳理
+                          
+                        </a>
+                        <p class="post-date">2023-05-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/08/11/220811-dbus-qtdbus/" class="post-title">
+                          
+                            D-Bus &amp; QtDBus
+                          
+                        </a>
+                        <p class="post-date">2022-08-11</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>

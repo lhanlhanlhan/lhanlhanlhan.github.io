@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>数字化的活字印刷术 (上) - 字体基础知识 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            技术文档
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          数字化的活字印刷术 (上) - 字体基础知识
+        
+      </div>
+      
+        <div class="post-excerpt">
+          近期对 Linux 系统通用的文本显示流程进行了一些梳理，积累一些与文字渲染相关的知识基础。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-12-29
+        15:24:
+          海淀, 北京
+        
+      </div>
+    </div>
+
+    
+      <div class="hp-grid-col-one-third row-elem">
+        <img src="cover.jpg" alt="Pinned Photo" class="post-pinned-img"/>
+      </div>
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <div class='callout'><p class='heading'>概述</p><p class='content'><p>多数企业都使用电脑进行办公，企业的员工经常需要浏览网页或撰写文档。在这些场景中，使用者大部分时间都是透过屏幕上显示的文字来接受及输出信息的。文本在屏幕上显示的效果会影响用户阅读的效率及舒适性，影响使用者的工作效率。</p>
+<p>近期，个人对 GNU/Linux 发行版系统内部通用文本显示流程进行了一些梳理，整理了一些文档，以积累一些与文字渲染相关的知识基础。如其中有事实问题或内容建议，强烈欢迎大家指正。</p></p></div>
+
+<p>本文主要内容：本文主要围绕字体，讲述与现代数字排印相关的一些概念。内容包括：</p>
+<ul>
+<li>排印技术的简要历史；</li>
+<li>字体相关基本名词及基本过程。</li>
+</ul>
+<p>本文为系列 “数字化的活字印刷术” 的上篇。在本系列下篇《<a href="/2022/12/29/221229-font-rendering">字型渲染</a>》中，还将介绍：</p>
+<ul>
+<li>以一个内存中的字符串从其初始状态（字符数组）到最终上屏显示的完整过程，来展现字体格式、Linux 系统字体管理机制及一般的文本渲染方式；</li>
+<li>穿插介绍与排版、印刷、字体、字体渲染有关的一些常见概念。</li>
+<li>使用字体的合法合规性。</li>
+</ul>
+<h1 id="排印技术的简要历史"><a href="#排印技术的简要历史" class="headerlink" title="排印技术的简要历史"></a>排印技术的简要历史</h1><ul>
+<li>本文所称的字体 (Font) 是随着排印技术一起产生的概念，是印刷时使用的能复用的字体风格，与手写、雕刻的的字形风格有所不同。</li>
+<li>汉字字体的历史：<ul>
+<li>在公元 7 世纪唐朝 雕版印刷术 (Woodblock Printing) 被发明，中文排印字体随之诞生。</li>
+<li>宋朝印刷正体：在宋朝，官方和民间曾发展出一套用于印刷的正体字，也就是我们所知的 “宋体字” 的前身。但是，宋朝的字形和我们今天看到的 “宋体字” 有许多不一致的地方，它更像我们认知中的 “楷体”。</li>
+<li>明朝印刷正体：在明朝，印刷正体逐渐演化成与今天看到的 “宋体字” 相似的风格。由于明朝改良的字形易于雕刻，字形便于走刀，能满足当时的印量，而得以在国内及同在汉字文化圈的日本、朝鲜、越南等地发扬。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/1-song.png" alt="宋朝的《姓解》"><span class="figcaption">宋朝的《姓解》</span><br><img src="/2022/12/29/221229-font-intro/2-ming.png" alt="明朝的《南齐书》"><span class="figcaption">明朝的《南齐书》</span></p>
+<ul>
+<li>“宋体字”：在中国 “宋体” 指的是现在采用的标准印刷正体，而不是宋朝的印刷正体。事实上在日本、南韩，由于明朝的推动作用而，与中国 “宋体” 相似字形的字体被称为 “明体” 或者 “明朝体” (Ming &#x2F; Min Cho)。</li>
+<li>当代的宋体字：为了适应电子印刷和屏幕显示，步入 20 世纪后中国和日本等地又对宋体字进行一番改造。现在电脑中使用的宋体字字形是中、日两地相互借鉴后演化而成的，更加端正锐利，书法味变弱，符合现代设计哲学中所需的明快感。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/3.png"></p>
+<ul>
+<li>西文字体的历史：<ul>
+<li>最早的西文排印字体：德国人 Johannes Gutenberg 于 15 世纪中期发明西文活字印刷术时，使用的字形是当时在正式的手写文献中普遍采用的 Gothic 风格字体。</li>
+<li>最早的罗马体：欧洲活字印刷被发明后，很快就随着贸易路线在欧洲各国被广泛使用。但是欧洲各地区采用的手写字体的风格不尽相同。当时在意大利有一种手写字体 “Rotunda” 在印刷中广受欢迎，它随后就成为了我们今天熟知的 Roman 字体的前身。</li>
+<li>现代罗马体：Roman 字体在诞生初期，还保留着一些旧式 Gothic 风格。在 15 世纪后期，文艺复兴的浪潮使一种由 Nicholas Jenson 改良的 Roman 字体风靡欧洲。对当时的 “人文主义者” 而言，Gothic 风格象征着 “黑暗的历史”，而新式 Roman 体则象征着新时代的到来。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/4-romans.png"></p>
+<ul>
+<li><strong>Times New Roman</strong> 字体：我们所熟悉的 Times New Roman 字体是 Monotype 公司在 20 世纪初为英国《泰晤士报》 (Times) 制作的正文字体，其中规中矩、四平八稳，具有易读性及能降低印刷成本，后来被内置在 Windows 系统中向公众分发。</li>
+</ul>
+<h1 id="计算机字体相关基本名词解释及基本过程"><a href="#计算机字体相关基本名词解释及基本过程" class="headerlink" title="计算机字体相关基本名词解释及基本过程"></a>计算机字体相关基本名词解释及基本过程</h1><p>与字体相关的名词较多，而有的是我们平常经常见到和用到的。这里介绍的字体相关名词及过程，是在计算机字体语境下的定义，不涉及活字印刷、雕版印刷的语境。</p>
+<h2 id="字体的分类法"><a href="#字体的分类法" class="headerlink" title="字体的分类法"></a>字体的分类法</h2><p>汉字字体多以风格分类，如宋体、黑体、楷体、行楷等。但是，西文（拉丁字母）由于使用的人数 &#x2F; 地区较多且分散，历史上产生了风格各异的字体，以风格来分类会比较困难。<br>在排印中，一般将西文字体按照 <strong>字母形状</strong> 分类，即：</p>
+<ul>
+<li>Monospace (等宽)：如 Ubuntu Mono。字符宽度相同的字体，我们可以说它属于 monospace 字体族。这种字体用于需要字符严格对齐的场合，例如源代码、终端界面。对于中文字体而言，并不存在等宽与比例的差别，因为所有中文字都是等宽的。我们平常所说的 “xx等宽中文” 其实只是说该字体的西文部分是等宽的。</li>
+<li>Sans Serif (无衬线)：如 Helvetiva。是指笔画末端没有修饰 (衬线) 的字体，通常用于屏幕显示。中文的黑体与圆体就属于此类字体。很多非专业人士会将粗体与黑体混为一谈，造成概念上的混淆，应注意区分。</li>
+</ul>
+<div class='callout'><p class='heading'></p><p class='content'>“Sans” 是法语，意思是 “无”。</p></div>
+
+<ul>
+<li>Serif (衬线)：如 Times。是指笔画末端有修饰 (衬线) 的字体，通常用于打印。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/5-serif.png" alt="衬线 / 非衬线字体的特点"><span class="figcaption">衬线 / 非衬线字体的特点</span></p>
+<h2 id="字体及排印的概念"><a href="#字体及排印的概念" class="headerlink" title="字体及排印的概念"></a>字体及排印的概念</h2><ul>
+<li>字形（Glyphs）是用来描述字体形状的数据结构。有 矢量字形 和 点阵字形 之分。<ul>
+<li>矢量字形：这种字形以 连续曲线 的方式存储在电脑中。由于曲线是连续的，因此即使在也不会产生失真。</li>
+<li>点阵字形：这种字形以 2D 像素表 (位图 &#x2F; Bitmap) 的方式存储在电脑中。由于像素是离散的，因此对其进行放大会造成失真。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/6-vector-and-non-vector.png"></p>
+<ul>
+<li>字体（Font）是一系列字形的集合。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/7-font-glyph-set.png" alt="字体是一系列字形的集合"><span class="figcaption">字体是一系列字形的集合</span></p>
+<ul>
+<li>栅格化、光栅化、位图化 (Rasterise)：屏幕、打印机是以位图进行显示和印刷的的。文字在进行屏幕显示及打印时，如果使用的是 矢量字形，则其需要被先处理成 一定分辨率（像素密度 &#x2F; PPI）及尺寸 的 2D 的图像格式。</li>
+<li>字体风格（Style）：我们一般说的 Regular、Italic、Oblique、Small Caps 都是字体风格。需要注意 Italic 和 Oblique 的区别。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/8-italics.png" alt="斜体字类型"><span class="figcaption">斜体字类型</span></p>
+<ul>
+<li>字体族（Font Family）：是一组相关字体的集合。<ul>
+<li>字体族中一般包含多种 风格（Style）的 变体（Variant），如常规、粗体、斜体、粗斜体等。</li>
+<li>常见的 Times、Arial、Helvetica，思源黑体、思源宋体 等字体都提供了一组字体族。</li>
+<li>我们一般说的 xx字体，实际上指的就是 xx字体族。比如我们说 “这篇文档的英文部分请使用 Times New Roman 字体”，实际上说的是 “这篇文档的英文部分请使用 Times New Roman 字体族”。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/9-font-family.png"></p>
+<ul>
+<li>通用字体族：<ul>
+<li>我们已经知道，Serif、Sans Serif、Monospace 并不代表特定的字体，而代表字体所属的风格分类。</li>
+<li>但是，在大部分 GNU&#x2F;Linux 发行版系统的字体列表中，确实能够看到到 “Serif” “Sans Serif” 或 “Monospace”。</li>
+<li>事实上，字体列表中的 “Serif” “Sans Serif” 或 “Monospace” 也确实并不表示特定的字体 —— 它其实指向的是系统为这三种风格配置的默认字体。<ul>
+<li>例如，在 Ubuntu 系统上，默认的 “Monospace” 字体是 Ubuntu Mono。因此，如果在字体列表中选择 “Monospace” 字体，实际上选择的是 “Ubuntu Mono”；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/10-default-font-families.png" alt="KDE Konsole 的字体列表中，确实能够看到到 “Serif” “Sans Serif” 或 “Monospace”。它其实指向的是系统为这三种风格配置的默认字体。"><span class="figcaption">KDE Konsole 的字体列表中，确实能够看到到 “Serif” “Sans Serif” 或 “Monospace”。它其实指向的是系统为这三种风格配置的默认字体。</span></p>
+<div class='callout'><p class='heading'></p><p class='content'><p>字体列表里包含 “Serif” “Sans Serif” 或 “Monospace” 是为了提供一种检索默认字体的方式。App 不必知道系统配置，也能加载到正确的默认字体。</p>
+<p>例如，App 在遇到要显示 “衬线” 字体的地方时，只需加载名为 “Serif” 的字体即可，不必关心在系统上 “Serif” 最终会映射到哪一个字体。</p></p></div>
+
+<h2 id="屏显和印刷使用的单位"><a href="#屏显和印刷使用的单位" class="headerlink" title="屏显和印刷使用的单位"></a>屏显和印刷使用的单位</h2><ul>
+<li>磅（Point，缩写 pt）是 印刷单位，描述字号。磅的尺寸有多种定义，一般我们使用 PostScript 标准的磅尺寸，1pt &#x3D; 1&#x2F;72 inch &#x3D; 0.35 mm。</li>
+<li>像素（Pixel）是 屏显、印刷都适用的单位，描述清晰度。<ul>
+<li>通常采用 分辨率（Resolution）来描述屏幕容纳像素的能力，其单位是 像素x像素。</li>
+<li>通常采用 像素密度（Pixel Density）来描述屏幕、打印机等设备出图时的细腻程度，其单位是 每吋像素数（Pixel per Inch，PPI）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="拉丁字体排版的概念"><a href="#拉丁字体排版的概念" class="headerlink" title="拉丁字体排版的概念"></a>拉丁字体排版的概念</h2><p>注：以下内容多数参编自 <a target="_blank" rel="noopener" href="https://fonts.google.com/knowledge/glossary">Google Fonts 知识库</a>。</p>
+<p><img src="/2022/12/29/221229-font-intro/12-features.png"></p>
+<ul>
+<li>Serif（衬线），有点像是汉字的笔锋。</li>
+<li>Ligature（连字），指的是将相邻字符连在一起。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/11-ligature.png"></p>
+<ul>
+<li>Small Cap（小型大写字母），指的是一种排版风格，令字符串中的小写字母排版出来跟小写字母尺寸相似、但是形状和大写字母保持一致。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/13-lines.png"></p>
+<ul>
+<li>Baseline（基线）</li>
+<li>x-height：小写字母的统一高度，常用字母 x 的高度来衡量。</li>
+<li>Cap height：大写字母的统一高度</li>
+<li>ascender、descender：小写字母中高过 x-height 的部分及低于 baseline 的部分。</li>
+</ul>
+<p><img src="/2022/12/29/221229-font-intro/14-old-fashion-nums.png"></p>
+<ul>
+<li>Old-fasion Numerals（旧式数字）如上图分别展示了普通数字、普通旧式数字，等宽数字、等宽旧式数字。<ul>
+<li>In fact they work even better for body text because of the way we’re used to reading: They have ascenders and descenders, and therefore don’t interrupt the flow of reading lowercase characters, resulting in a more comfortable reading experience.</li>
+</ul>
+</li>
+</ul>
+<h1 id="后续篇章"><a href="#后续篇章" class="headerlink" title="后续篇章"></a>后续篇章</h1><p>在本系列下篇《字型渲染》中，还将介绍：</p>
+<ul>
+<li>以一个内存中的字符串从其初始状态（字符数组）到最终上屏显示的完整过程，来展现字体格式、Linux 系统字体管理机制及一般的文本渲染方式；</li>
+<li>穿插介绍与排版、印刷、字体、字体渲染有关的一些常见概念。</li>
+<li>使用字体的合法合规性。</li>
+</ul>
+
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">目录</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E5%8D%B0%E6%8A%80%E6%9C%AF%E7%9A%84%E7%AE%80%E8%A6%81%E5%8E%86%E5%8F%B2"><span class="toc-text">排印技术的简要历史</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%AD%97%E4%BD%93%E7%9B%B8%E5%85%B3%E5%9F%BA%E6%9C%AC%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A%E5%8F%8A%E5%9F%BA%E6%9C%AC%E8%BF%87%E7%A8%8B"><span class="toc-text">计算机字体相关基本名词解释及基本过程</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%97%E4%BD%93%E7%9A%84%E5%88%86%E7%B1%BB%E6%B3%95"><span class="toc-text">字体的分类法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%97%E4%BD%93%E5%8F%8A%E6%8E%92%E5%8D%B0%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">字体及排印的概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B1%8F%E6%98%BE%E5%92%8C%E5%8D%B0%E5%88%B7%E4%BD%BF%E7%94%A8%E7%9A%84%E5%8D%95%E4%BD%8D"><span class="toc-text">屏显和印刷使用的单位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%89%E4%B8%81%E5%AD%97%E4%BD%93%E6%8E%92%E7%89%88%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">拉丁字体排版的概念</span></a></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD%E7%AF%87%E7%AB%A0"><span class="toc-text">后续篇章</span></a></li></ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">标签</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Linux/">Linux</a>
+                      </li>
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Fonts/">Fonts</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">发现</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-rendering/" class="post-title">
+                          
+                            数字化的活字印刷术 (下) - 字形渲染
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/05/16/230516-qquicktext-text-rendering/" class="post-title">
+                          
+                            QQuickText 的文字渲染流程简单梳理
+                          
+                        </a>
+                        <p class="post-date">2023-05-16</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/08/11/220811-dbus-qtdbus/" class="post-title">
+                          
+                            D-Bus &amp; QtDBus
+                          
+                        </a>
+                        <p class="post-date">2022-08-11</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
