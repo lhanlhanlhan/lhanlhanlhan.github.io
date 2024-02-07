@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>fontconfig 匹配字体过程浅析 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            技术文档
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          fontconfig 匹配字体过程浅析
+        
+      </div>
+      
+        <div class="post-excerpt">
+          本文通过对 FcFontSort 的源码探究揭示了 GNU/Linux 桌面系统 fontconfig 套件匹配字体的过程。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-12-30
+        17:44:
+          北京
+        
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <div class='callout'><p class='heading'>编者按</p><p class='content'><p>fontconfig 在匹配我们需要的字体时，会先计算字体库中的所有字体与查询的距离，然后采纳其中距离最小（匹配度最高）的字体作为匹配字体。</p>
+<p>在 fontconfig 中库函数 FcFontSort、FcFontMatch 都能实现这一需求。本文通过对 FcFontSort 的源码探究揭示了这一匹配过程。</p>
+<p>注：为保证易读性，本文贴出的所有代码在遵循基本语义不变的原则上，对 fontconfig 仓库 中的源代码进行了增加、删除、渲染及改写。读者不可认为本文贴出的代码是真正的源代码。</p></p></div>
+
+<p>本文是系列 “<a href="/2022/12/29/221229-font-rendering">数字化的活字印刷术</a>” 的附属文档。本文中或存在一些基本概念需要提前认知，可前往 <a href="/2022/12/29/221229-font-rendering">主文档</a> 中查看详情。</p>
+<h1 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h1><ul>
+<li><p><strong>字体信息</strong>（pattern）：描述一个字体各方面的全部信息。一串字体信息可由一系列参数构成，参数包括 Family Name、Weight、Size、选用的栅格化方式、支持的语言、字符集等。</p>
+</li>
+<li><p><strong>字体信息表达式</strong>（textual representation for patterns）即一个字体信息的字符串表示，其格式为 <code>&lt;families&gt;-&lt;point sizes&gt;:&lt;name1&gt;=&lt;values1&gt;:&lt;name2&gt;=&lt;values2&gt;...</code>，例如 “<code>Monospace-19:bold</code>“ 表示一个 Family Name 为 Monospace 的 19pt 的加粗字体。</p>
+</li>
+<li><p><strong>查询、查询条件</strong>（query）：指我们输入到 Fontconfig 的字体查询条件，用 字体信息表达式 来表达，例如 “<code>Monospace,mono-19:bold</code>“ 表示我们需要找支持 19pt 的默认粗体等距字体。</p>
+</li>
+</ul>
+<h1 id="匹配过程框架"><a href="#匹配过程框架" class="headerlink" title="匹配过程框架"></a>匹配过程框架</h1><p>在正式进行距离计算，并根据距离排序之前，FcFontSort 首先会根据配置文件构造一套 <strong>候选字体集合</strong>。然后，由 FcFontSetSort 函数遍历这个 <strong>候选字体集合</strong>，计算其中每个字体与我们查询条件的距离。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line">FcFontSet* </span><br><span class="line"><span class="title function_">FcFontSort</span> <span class="params">(FcConfig *config, FcPattern *p, FcResult *result)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ... 略去一些初始化操作、判空操作等</span></span><br><span class="line">    <span class="keyword">if</span> (config-&gt;fonts[FcSetSystem])</span><br><span class="line">        sets[nsets++] = config-&gt;fonts[FcSetSystem];</span><br><span class="line">    <span class="keyword">if</span> (config-&gt;fonts[FcSetApplication])</span><br><span class="line">        sets[nsets++] = config-&gt;fonts[FcSetApplication];</span><br><span class="line">    ret = FcFontSetSort (config, sets, nsets, p, result);</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Family-Hash-的构造"><a href="#Family-Hash-的构造" class="headerlink" title="Family Hash 的构造"></a>Family Hash 的构造</h1><p>FcFontSetSort 函数（见「距离计算」中贴出的源码）首先进行一些判空、初始化操作。</p>
+<p>在确认行为合法后，该函数会调用 <code>FcCompareDataInit</code> 来构造与查询条件相对应的 Family Hash。</p>
+<p><strong>Family Hash</strong> 是用户提供的查询条件中的 Family Name 的查询表，key 是 Family Name，value 是 <strong>该 Family Name 在查询所提供的 Family Name 列表中第一次出现的位置</strong>。</p>
+<blockquote>
+<p>例如，如果我们的查询是 “<code>sans-serif,sans,serif,sans</code>“，那么生成的 Family Hash 是：<br><code>&#123; &quot;sans-serif&quot;: 0, &quot;sans&quot;: 1, &quot;serif&quot;: 2 &#125;</code></p>
+</blockquote>
+<p>Family Hash 在字体匹配中具有重要作用。在检查某个字体的 Family Name 与我们的查询条件中的 Family Name 是否匹配时，实际上是通过对这张表进行散列查找实现的。</p>
+<p>在上面的例子中，如果系统中某个字体的 Family Name 是 <code>&quot;monospace,mono&quot;</code>，而由于这两个名字在上述 Family Hash 中都找不到，因此该字体的 Family 距离会很大（Family 的匹配度低）；如果某字体的 Family Name 中包含 <code>&quot;sans-serif&quot;</code>，则该字体的 Family 距离为 0（匹配度最高）。</p>
+<p>从 Family Hash 所使用的散列函数可知，Family Name 的匹配实际上是忽略大小写及忽略空格的。换句话说，monospace、MonoSpace、Monospace、monoSpace、mono space、Mono Space 在匹配 Family Name 时是等效的，但是 monospace、mono、mono-soace 之间则不等效。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">FcCompareDataInit</span> <span class="params">(FcPattern     *pattern,</span></span><br><span class="line"><span class="params">                   FcCompareData *data)</span> &#123;    </span><br><span class="line">    <span class="comment">/// 创建一个 Hash 表</span></span><br><span class="line">    FcHashTable *table;</span><br><span class="line">    table = FcHashTableCreate ((FcHashFunc)FcStrHashIgnoreBlanksAndCase,</span><br><span class="line">                               (FcCompareFunc)FcStrCmpIgnoreBlanksAndCase,</span><br><span class="line">                               <span class="literal">NULL</span>,</span><br><span class="line">                               <span class="literal">NULL</span>,</span><br><span class="line">                               <span class="literal">NULL</span>,</span><br><span class="line">                               <span class="built_in">free</span>);</span><br><span class="line">    <span class="comment">/* 省略根据 pattern 做成 Family Hash 的过程 */</span></span><br><span class="line">    data-&gt;family_hash = table;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="距离计算"><a href="#距离计算" class="headerlink" title="距离计算"></a>距离计算</h1><p>当得到 <strong>Family Hash</strong> 后， FcFontSetSort 会进行 距离计算，即遍历整个字体库，并计算查询条件（p）与每个字体（new-&gt;pattern）的距离。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line">FcFontSet *</span><br><span class="line"><span class="title function_">FcFontSetSort</span> <span class="params">(FcConfig  *config, </span></span><br><span class="line"><span class="params">               FcFontSet **sets,</span></span><br><span class="line"><span class="params">               <span class="type">int</span>       nsets,</span></span><br><span class="line"><span class="params">               FcPattern *p, </span></span><br><span class="line"><span class="params">               FcResult *result)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* ... 此处略去一些初始化操作、判空操作等 */</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* 得到 Family Hash */</span></span><br><span class="line">    FcCompareDataInit (p, &amp;data);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* 系统中每个字体遍历一遍，获得 字体与查询条件的距离（new-&gt;score） */</span></span><br><span class="line">    FcFontSet      *s;        <span class="comment">// 存储字体集用的临时变量</span></span><br><span class="line">    <span class="type">int</span>            nnodes;    <span class="comment">// 候选字体列表的数量</span></span><br><span class="line">    FcSortNode     *new;      <span class="comment">// 排序用的节点指针</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> ss = <span class="number">0</span>; ss &lt; nsets; ss++) &#123;</span><br><span class="line">        s = sets[ss];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> f = <span class="number">0</span>; f &lt; s-&gt;nfont; f++) &#123;</span><br><span class="line">            new = <span class="comment">/* 省略内存分配代码 */</span>;</span><br><span class="line">            new-&gt;pattern = s-&gt;fonts[f];</span><br><span class="line">            </span><br><span class="line">            <span class="comment">/* 计算当前字体与查询的距离向量（new-&gt;score） */</span></span><br><span class="line">            <span class="keyword">if</span> (!FcCompare (p, new-&gt;pattern, new-&gt;score, result, &amp;data))</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">            <span class="comment">/* 打印得到的距离向量（当 FC_DEBUG=2 时有效） */</span></span><br><span class="line">            <span class="keyword">if</span> (FcDebug () &amp; FC_DBG_MATCHV) &#123;</span><br><span class="line">                <span class="built_in">printf</span> (<span class="string">&quot;Score&quot;</span>);</span><br><span class="line">                <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PRI_END; i++) &#123;</span><br><span class="line">                    <span class="built_in">printf</span> (<span class="string">&quot; %g&quot;</span>, new-&gt;score[i]);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="built_in">printf</span> (<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            nnodes += <span class="number">1</span></span><br><span class="line">            <span class="comment">/* ... 将字体信息、得分写入候选人列表中 */</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* ... 此处省略根据所选语言来优化查询结果的一些逻辑 */</span></span><br><span class="line">    </span><br><span class="line">    FcFontPattern *best = <span class="comment">/* 取得唯一匹配值 */</span>;</span><br><span class="line">    <span class="keyword">return</span> best;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="距离向量"><a href="#距离向量" class="headerlink" title="距离向量"></a>距离向量</h2><p>计算距离时，会为字体库中每个字体生成一个 <strong>距离向量</strong>（上面代码中的 new-&gt;score），其中每个值是该字体与查询条件在某个指标上（比如 Family、Weight、PointSize）的距离的具体值。</p>
+<p>距离向量的维度是 28，其中各个位置与 <strong>查询条件的优先级列表</strong>（附录 1） 中的具体条件的种类一一对应。例如，该向量中的第 8 个值是该字体与查询条件在 Family Name 上的距离值；第 9 个值是该字体与查询条件在 PostScript Name 上的距离值；第 16 个值是该字体与查询条件在 Weight 上的距离值。</p>
+<p>生成距离向量使用的是 FcCompare 函数。该函数只比较查询条件和候选字体中共有的字体信息，并计算它们的距离；对于那些查询条件中指定了、但是候选字体信息中没有的信息，就不去进行比较，并设置他们的默认距离为 0（即匹配度高）。</p>
+<p>例如，查询条件中指定了 <code>&quot;antialias=true&quot;</code>，但是候选字体并未提供这一信息，则该项比较会跳过，并设置默认距离为 0。</p>
+<p><img src="/2022/12/30/221230-font-config/1-querying.jpg"></p>
+<p>由于 Family 项目较为特殊——每个字体都分为 strong family、weak family 两组值，不像其他参数那样只有一组值，因此，Family 项目需要单独拧出来进行距离计算。</p>
+<p>Family 的距离计算函数为 <code>FcCompareFamilies</code>，其他项目的距离计算函数为 <code>FcCompareValueList</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="type">static</span> FcBool</span><br><span class="line"><span class="title function_">FcCompare</span> <span class="params">(FcPattern        *pat,    <span class="comment">/// 查询条件</span></span></span><br><span class="line"><span class="params">           FcPattern        *fnt,    <span class="comment">/// 候选字体</span></span></span><br><span class="line"><span class="params">           <span class="type">double</span>           *value,</span></span><br><span class="line"><span class="params">           FcResult         *result,</span></span><br><span class="line"><span class="params">           FcCompareData    *data)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PRI_END; i++)</span><br><span class="line">        value[i] = <span class="number">0.0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 将查询条件与候选字体的信息进行一一比较 */</span></span><br><span class="line">    <span class="type">int</span> i1 = <span class="number">0</span>, i2 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i1 &lt; pat-&gt;num &amp;&amp; i2 &lt; fnt-&gt;num) &#123;</span><br><span class="line">        FcPatternElt *elt_i1 = &amp;FcPatternElts(pat)[i1];</span><br><span class="line">        FcPatternElt *elt_i2 = &amp;FcPatternElts(fnt)[i2];</span><br><span class="line">        </span><br><span class="line">        i = FcObjectCompare(elt_i1-&gt;object, elt_i2-&gt;object);</span><br><span class="line">        <span class="keyword">if</span> (i &gt; <span class="number">0</span>)</span><br><span class="line">            i2++;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (i &lt; <span class="number">0</span>)</span><br><span class="line">            i1++;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (elt_i1-&gt;object == FC_FAMILY_OBJECT &amp;&amp; data-&gt;family_hash) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!FcCompareFamilies (pat, FcPatternEltValues(elt_i1),</span><br><span class="line">                                    fnt, FcPatternEltValues(elt_i2),</span><br><span class="line">                                    value, result,</span><br><span class="line">                                    data-&gt;family_hash))</span><br><span class="line">                <span class="keyword">return</span> FcFalse;</span><br><span class="line">            i1++;</span><br><span class="line">            i2++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="type">const</span> FcMatcher *match = FcObjectToMatcher (elt_i1-&gt;object, FcFalse);</span><br><span class="line">            <span class="keyword">if</span> (!FcCompareValueList (elt_i1-&gt;object, match,</span><br><span class="line">                                     FcPatternEltValues(elt_i1),</span><br><span class="line">                                     FcPatternEltValues(elt_i2),</span><br><span class="line">                                     <span class="literal">NULL</span>, value, <span class="literal">NULL</span>, result))</span><br><span class="line">                <span class="keyword">return</span> FcFalse;</span><br><span class="line">            i1++;</span><br><span class="line">            i2++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> FcTrue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Family-的距离计算函数"><a href="#Family-的距离计算函数" class="headerlink" title="Family 的距离计算函数"></a>Family 的距离计算函数</h2><p>Fontconfig 计算两个字体的 Family 的距离（匹配度）使用的函数是 <code>FcCompareFamilies</code>。为简单起见，在本节叙述 Family 的距离计算函数时，对 strong family、weak family 不予区分。</p>
+<p>源码定义：候选字体的 Family 与查询条件的 Family 的距离，等于 该候选字体的 Family 在查询条件的 Family 列表中第一次出现的位置的最小值。<br>例如，假设我们的查询条件是 <code>&quot;sans-serif,sans,sansserif,Helvetica,Arial&quot;</code>：</p>
+<ul>
+<li><p>如果某字体的 Family 是 <code>&quot;serif,Times,TimesNewRoman&quot;</code>，由于其中没有任何 Family 和我们的查询条件相匹配，因此其 Family 距离为 1e99（即 Family 匹配度极低）；</p>
+</li>
+<li><p>如果某字体的 Family 是 <code>&quot;Heivetica,Sans,sans serif&quot;</code>：</p>
+<ul>
+<li>Helvetica 在查询条件中第一次出现的位置是 3，Sans 是 1，Sans serif 没有出现过；</li>
+<li>取上述 Family 在查询条件中 第一次出现的位置的最小值（1）作为 Family 的距离。</li>
+</ul>
+</li>
+</ul>
+<p>由于 Family Hash 表中的 value 正好记录的是 Family 在查询条件中第一次出现的位置，所以上述目的可以通过查 Family Hash 表实现。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="type">static</span> FcBool</span><br><span class="line"><span class="title function_">FcCompareFamilies</span> <span class="params">(FcPattern       *pat,</span></span><br><span class="line"><span class="params">                   FcValueListPtr   v1orig,</span></span><br><span class="line"><span class="params">                   FcPattern       *fnt,</span></span><br><span class="line"><span class="params">                   FcValueListPtr   v2orig,</span></span><br><span class="line"><span class="params">                   <span class="type">double</span>          *value,</span></span><br><span class="line"><span class="params">                   FcResult        *result,</span></span><br><span class="line"><span class="params">                   FcHashTable     *table)</span></span><br><span class="line">&#123;</span><br><span class="line">    FcValueListPtr v2;</span><br><span class="line">    <span class="type">double</span> strong_value;</span><br><span class="line">    <span class="type">double</span> weak_value;</span><br><span class="line">    <span class="type">const</span> <span class="type">void</span> *key;</span><br><span class="line">    FamilyEntry *e;</span><br><span class="line"></span><br><span class="line">    assert (table != <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    strong_value = <span class="number">1e99</span>;</span><br><span class="line">    weak_value = <span class="number">1e99</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 遍历候选字体中的 Family 列表 */</span></span><br><span class="line">    <span class="keyword">for</span> (v2 = v2orig; v2; v2 = FcValueListNext(v2))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/* 这个 Family 出现在 Family Hash 中，则距离等于 Family Hash 中记录的值 */</span></span><br><span class="line">        key = FcValueString (&amp;v2-&gt;value);</span><br><span class="line">        <span class="keyword">if</span> (FcHashTableFind (table, key, (<span class="type">void</span> **)&amp;e))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (e-&gt;strong_value &lt; strong_value)</span><br><span class="line">                strong_value = e-&gt;strong_value;</span><br><span class="line">            <span class="keyword">if</span> (e-&gt;weak_value &lt; weak_value)</span><br><span class="line">                weak_value = e-&gt;weak_value;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* 如果这个 Family 未有出现在 Family Hash 中，就跳过 */</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    value[PRI_FAMILY_STRONG] = strong_value;</span><br><span class="line">    value[PRI_FAMILY_WEAK] = weak_value;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> FcTrue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="普通项目的距离计算函数"><a href="#普通项目的距离计算函数" class="headerlink" title="普通项目的距离计算函数"></a>普通项目的距离计算函数</h2><p>包括 Family 在内，所有字体信息项目都允许有多个值，基本数据结构都是 List。Fontconfig 计算两个 List 的距离（匹配度）使用的函数是 <code>FcCompareValueList</code>。</p>
+<p>具体做法是将两个 List 中的每个值进行两两比较，比较过程中计算加权距离，最后输出所有加权距离最小值。在加权距离的计算中，两值的绝对距离值的权重最大，同时，两值在 List 中的先后顺序也参与权重计算。</p>
+<p>由于每个项目的数据类型不同，其绝对距离计算方式不一样，如数字型项目（如 FontVersion）的绝对距离为差的绝对值，字符串型项目（如 Style 等）的绝对距离采用字符串比较函数（类似 strcmp）来计算。各项目的类型、绝对距离计算方式见 附录 2。</p>
+<p>【例】如果我们的查询条件是 **”fontversion&#x3D;80,85,90”**，某字体提供的 FontVersion 是 **”fontversion&#x3D;90,95”**，则 FontVersion 的加权距离的计算过程为：</p>
+<ul>
+<li>参与计算权重的值对为 (80,90)、(80,95)、(85,90)、(85,95)、(90,90)、(90,95)，即 3x2 &#x3D; 6 个。</li>
+<li>每个值对计算加权距离。<ul>
+<li>fontversion 的值的类型为 int，其 绝对距离值 为两值的绝对差值 |v2 - v1|。</li>
+<li>(80,90) 的绝对距离为 10，加权距离为 10 * 1000 + 0 * 100 + 0 &#x3D; 10000</li>
+<li>(80,95) 的绝对距离为 5，加权距离为 15 * 1000 + 0 * 100 + 1 &#x3D; 15001</li>
+<li>(90,90) 的绝对距离为 0，加权距离为 0 * 1000 + 2 * 100 + 0 &#x3D; 200</li>
+<li>(90,95) 的绝对距离为 5，加权距离为 5 * 1000 + 2 * 100 + 1 &#x3D; 5201</li>
+</ul>
+</li>
+<li>最小加权距离为 200，因此 FontVersion 的加权距离为 200。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="type">static</span> FcBool</span><br><span class="line"><span class="title function_">FcCompareValueList</span> <span class="params">(FcObject             object,</span></span><br><span class="line"><span class="params">                    <span class="type">const</span> FcMatcher      *match,</span></span><br><span class="line"><span class="params">                    FcValueListPtr   v1orig,        <span class="comment">/* pattern */</span></span></span><br><span class="line"><span class="params">                    FcValueListPtr   v2orig,        <span class="comment">/* target */</span></span></span><br><span class="line"><span class="params">                    FcValue         *bestValue,</span></span><br><span class="line"><span class="params">                    <span class="type">double</span>          *value,</span></span><br><span class="line"><span class="params">                    FcResult        *result)</span></span><br><span class="line">&#123;</span><br><span class="line">    FcValueListPtr        v1, v2;</span><br><span class="line">    <span class="type">double</span>                v, best;</span><br><span class="line">    <span class="type">int</span>                   j, k, pos = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    best = <span class="number">1e99</span>;</span><br><span class="line">    <span class="comment">/* 两两比较 */</span></span><br><span class="line">    <span class="keyword">for</span> (v1 = v1orig, j = <span class="number">0</span>; v1; v1 = FcValueListNext(v1), j++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (v2 = v2orig, k = <span class="number">0</span>; v2; v2 = FcValueListNext(v2), k++) &#123;</span><br><span class="line">            FcValue matchValue;</span><br><span class="line">            v = (match-&gt;compare) (&amp;v1-&gt;value, &amp;v2-&gt;value, &amp;matchValue);</span><br><span class="line">            <span class="keyword">if</span> (v &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                *result = FcResultTypeMismatch;</span><br><span class="line">                <span class="keyword">return</span> FcFalse;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/* 加权距离 */</span></span><br><span class="line">            v = v * <span class="number">1000</span> + j * <span class="number">100</span> + k;</span><br><span class="line">            <span class="keyword">if</span> (v &lt; best) &#123;</span><br><span class="line">                <span class="keyword">if</span> (bestValue)</span><br><span class="line">                    *bestValue = matchValue;</span><br><span class="line">                best = v;</span><br><span class="line">                pos = k;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* 记录距离 */</span></span><br><span class="line">    <span class="keyword">if</span> (value) &#123;</span><br><span class="line">        value[match-&gt;strong] += best;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> FcTrue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="排序"><a href="#排序" class="headerlink" title="排序"></a>排序</h1><p>计算距离结束后，如果需要将全部字体按照其与查询的距离排序，使用的是快速排序算法。排序时采用的比较两个字体整体距离值的函数是 <code>FcSortCompare</code>。</p>
+<ul>
+<li>按照 <strong>优先级顺序</strong>，该函数从优先级最大的距离值开始。当找到第一个两字体不相等的距离时，距离值较大的那个字体，我们就说它总距离更大（匹配度更低）；</li>
+<li>如果两个字体的整个距离向量都相等，则两个字体与查询条件的距离相等。<blockquote>
+<p>【例】如果字体 A 的距离向量是 [0, 1, 1, 0, …]，字体 B 的距离向量是 [0, 1, 0, 4, …]，则：</p>
+</blockquote>
+</li>
+<li>字体 A 与字体 B 的第 0、1 个距离相等，第 2 个距离不相等；</li>
+<li>由于 A[2] &gt; B[2]，因此我们说字体 A 与查询条件的距离较大，匹配度比 B 更低。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">FcSortNode</span> &#123;</span></span><br><span class="line">    FcPattern        *pattern;</span><br><span class="line">    <span class="type">double</span>           score[PRI_END];</span><br><span class="line">&#125; FcSortNode;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span></span><br><span class="line"><span class="title function_">FcSortCompare</span> <span class="params">(<span class="type">const</span> <span class="type">void</span> *aa, <span class="type">const</span> <span class="type">void</span> *ab)</span> &#123;</span><br><span class="line">    FcSortNode  *a = *(FcSortNode **) aa;</span><br><span class="line">    FcSortNode  *b = *(FcSortNode **) ab;</span><br><span class="line">    <span class="type">double</span>        *as = &amp;a-&gt;score[<span class="number">0</span>];</span><br><span class="line">    <span class="type">double</span>        *bs = &amp;b-&gt;score[<span class="number">0</span>];</span><br><span class="line">    <span class="type">double</span>        ad = <span class="number">0</span>, bd = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span>         i;</span><br><span class="line"></span><br><span class="line">    i = PRI_END;</span><br><span class="line">    <span class="comment">/* 比较整体距离值 */</span></span><br><span class="line">    **<span class="keyword">while</span> (i-- &amp;&amp; (ad = *as++) == (bd = *bs++));**</span><br><span class="line">    <span class="keyword">return</span> ad &lt; bd ? <span class="number">-1</span> : ad &gt; bd ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="唯一匹配值的取得"><a href="#唯一匹配值的取得" class="headerlink" title="唯一匹配值的取得"></a>唯一匹配值的取得</h1><p>在进行字体匹配时，根据查询条件，我们希望匹配出唯一的、匹配度最高的字体。但是距离计算过程中，可能出现距离向量相等的情况，这样距离值最小（匹配度最高）的字体可能存在多个。</p>
+<p>事实上 Fontconfig 没有对于这种情况做特殊处理。为了能够返回唯一匹配字体， Fontconfig 在执行 Match 时最后输出的匹配度最高的字体，是字体库中第一个找到的距离值最小的字体。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcmatch.c</span></span><br><span class="line"><span class="comment">/// static FcPattern * FcFontSetMatchInternal (...)</span></span><br><span class="line"><span class="comment">/// ...</span></span><br><span class="line">        <span class="keyword">for</span> (f = <span class="number">0</span>; f &lt; s-&gt;nfont; f++) &#123;</span><br><span class="line">            <span class="comment">/// ...</span></span><br><span class="line">            <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PRI_END; i++) &#123;</span><br><span class="line">                <span class="keyword">if</span> (best &amp;&amp; bestscore[i] &lt; score[i])</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="comment">/* 用的是「&lt;」，所以其实遇到第一个最小距离值时就把它记录下来了 */</span></span><br><span class="line">                <span class="keyword">if</span> (!best || score[i] &lt; bestscore[i]) &#123;</span><br><span class="line">                    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PRI_END; i++)</span><br><span class="line">                        bestscore[i] = score[i];</span><br><span class="line">                    best = s-&gt;fonts[f];</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"><span class="comment">/// ...</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="Appendices"><a href="#Appendices" class="headerlink" title="Appendices"></a>Appendices</h1><h2 id="附录-1：字体查询条件中各项字体参数及其优先级列表"><a href="#附录-1：字体查询条件中各项字体参数及其优先级列表" class="headerlink" title="附录 1：字体查询条件中各项字体参数及其优先级列表"></a>附录 1：字体查询条件中各项字体参数及其优先级列表</h2><p>源码 <a target="_blank" rel="noopener" href="https://github.com/freedesktop/fontconfig/blob/master/src/fcmatch.c">在此</a>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">enum</span> _<span class="title">FcMatcherPriority</span> &#123;</span></span><br><span class="line">    PRI1(FILE),</span><br><span class="line">    PRI1(FONTFORMAT),</span><br><span class="line">    PRI1(VARIABLE),</span><br><span class="line">    PRI1(SCALABLE),</span><br><span class="line">    PRI1(COLOR),</span><br><span class="line">    PRI1(FOUNDRY),</span><br><span class="line">    PRI1(CHARSET),</span><br><span class="line">    PRI_FAMILY_STRONG,</span><br><span class="line">    PRI_POSTSCRIPT_NAME_STRONG,</span><br><span class="line">    PRI1(LANG),</span><br><span class="line">    PRI_FAMILY_WEAK,</span><br><span class="line">    PRI_POSTSCRIPT_NAME_WEAK,</span><br><span class="line">    PRI1(SYMBOL),</span><br><span class="line">    PRI1(SPACING),</span><br><span class="line">    PRI1(SIZE),</span><br><span class="line">    PRI1(PIXEL_SIZE),</span><br><span class="line">    PRI1(STYLE),</span><br><span class="line">    PRI1(SLANT),</span><br><span class="line">    PRI1(WEIGHT),</span><br><span class="line">    PRI1(WIDTH),</span><br><span class="line">    PRI1(FONT_HAS_HINT),</span><br><span class="line">    PRI1(DECORATIVE),</span><br><span class="line">    PRI1(ANTIALIAS),</span><br><span class="line">    PRI1(RASTERIZER),</span><br><span class="line">    PRI1(OUTLINE),</span><br><span class="line">    PRI1(ORDER),</span><br><span class="line">    PRI1(FONTVERSION),</span><br><span class="line">    PRI_END</span><br><span class="line">&#125; FcMatcherPriority;</span><br></pre></td></tr></table></figure>
+
+<h2 id="附录-2：各项字体参数的数据类型及比较函数"><a href="#附录-2：各项字体参数的数据类型及比较函数" class="headerlink" title="附录 2：各项字体参数的数据类型及比较函数"></a>附录 2：各项字体参数的数据类型及比较函数</h2><p>源码 <a target="_blank" rel="noopener" href="https://github.com/freedesktop/fontconfig/blob/master/src/fcobjs.h">在此</a>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// fcobjs.h</span></span><br><span class="line">FC_OBJECT (FAMILY,                FcTypeString,        FcCompareFamily)</span><br><span class="line">FC_OBJECT (FAMILYLANG,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (STYLE,                FcTypeString,        FcCompareString)</span><br><span class="line">FC_OBJECT (STYLELANG,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (FULLNAME,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (FULLNAMELANG,        FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (SLANT,                FcTypeInteger,        FcCompareNumber)</span><br><span class="line">FC_OBJECT (WEIGHT,                FcTypeRange,        FcCompareRange)</span><br><span class="line">FC_OBJECT (WIDTH,                FcTypeRange,        FcCompareRange)</span><br><span class="line">FC_OBJECT (SIZE,                FcTypeRange,        FcCompareSize)</span><br><span class="line">FC_OBJECT (ASPECT,                FcTypeDouble,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (PIXEL_SIZE,                FcTypeDouble,        FcCompareNumber)</span><br><span class="line">FC_OBJECT (SPACING,                FcTypeInteger,        FcCompareNumber)</span><br><span class="line">FC_OBJECT (FOUNDRY,                FcTypeString,        FcCompareString)</span><br><span class="line">FC_OBJECT (ANTIALIAS,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (HINT_STYLE,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (HINTING,                FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (VERTICAL_LAYOUT,        FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (AUTOHINT,                FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (GLOBAL_ADVANCE,        FcTypeBool,        <span class="literal">NULL</span>)        <span class="comment">/* deprecated */</span></span><br><span class="line">FC_OBJECT (FILE,                FcTypeString,        FcCompareFilename)</span><br><span class="line">FC_OBJECT (INDEX,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (RASTERIZER,                FcTypeString,        FcCompareString)        <span class="comment">/* deprecated */</span></span><br><span class="line">FC_OBJECT (OUTLINE,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (SCALABLE,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (DPI,                        FcTypeDouble,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (RGBA,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (SCALE,                FcTypeDouble,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (MINSPACE,                FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (CHARWIDTH,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (CHAR_HEIGHT,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (MATRIX,                FcTypeMatrix,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (CHARSET,                FcTypeCharSet,        FcCompareCharSet)</span><br><span class="line">FC_OBJECT (LANG,                FcTypeLangSet,        FcCompareLang)</span><br><span class="line">FC_OBJECT (FONTVERSION,                FcTypeInteger,        FcCompareNumber)</span><br><span class="line">FC_OBJECT (CAPABILITY,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (FONTFORMAT,                FcTypeString,        FcCompareString)</span><br><span class="line">FC_OBJECT (EMBOLDEN,                FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (EMBEDDED_BITMAP,        FcTypeBool,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (DECORATIVE,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (LCD_FILTER,                FcTypeInteger,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (NAMELANG,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (FONT_FEATURES,        FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (PRGNAME,                FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (HASH,                FcTypeString,        <span class="literal">NULL</span>)        <span class="comment">/* deprecated */</span></span><br><span class="line">FC_OBJECT (POSTSCRIPT_NAME,        FcTypeString,        FcComparePostScript)</span><br><span class="line">FC_OBJECT (COLOR,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (SYMBOL,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (FONT_VARIATIONS,        FcTypeString,        <span class="literal">NULL</span>)</span><br><span class="line">FC_OBJECT (VARIABLE,                FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (FONT_HAS_HINT,        FcTypeBool,        FcCompareBool)</span><br><span class="line">FC_OBJECT (ORDER,                FcTypeInteger,        FcCompareNumber)</span><br></pre></td></tr></table></figure>
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">目录</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="toc-text">名词解释</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8C%B9%E9%85%8D%E8%BF%87%E7%A8%8B%E6%A1%86%E6%9E%B6"><span class="toc-text">匹配过程框架</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Family-Hash-%E7%9A%84%E6%9E%84%E9%80%A0"><span class="toc-text">Family Hash 的构造</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%9D%E7%A6%BB%E8%AE%A1%E7%AE%97"><span class="toc-text">距离计算</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%9D%E7%A6%BB%E5%90%91%E9%87%8F"><span class="toc-text">距离向量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Family-%E7%9A%84%E8%B7%9D%E7%A6%BB%E8%AE%A1%E7%AE%97%E5%87%BD%E6%95%B0"><span class="toc-text">Family 的距离计算函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%99%AE%E9%80%9A%E9%A1%B9%E7%9B%AE%E7%9A%84%E8%B7%9D%E7%A6%BB%E8%AE%A1%E7%AE%97%E5%87%BD%E6%95%B0"><span class="toc-text">普通项目的距离计算函数</span></a></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E5%BA%8F"><span class="toc-text">排序</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%94%AF%E4%B8%80%E5%8C%B9%E9%85%8D%E5%80%BC%E7%9A%84%E5%8F%96%E5%BE%97"><span class="toc-text">唯一匹配值的取得</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Appendices"><span class="toc-text">Appendices</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%84%E5%BD%95-1%EF%BC%9A%E5%AD%97%E4%BD%93%E6%9F%A5%E8%AF%A2%E6%9D%A1%E4%BB%B6%E4%B8%AD%E5%90%84%E9%A1%B9%E5%AD%97%E4%BD%93%E5%8F%82%E6%95%B0%E5%8F%8A%E5%85%B6%E4%BC%98%E5%85%88%E7%BA%A7%E5%88%97%E8%A1%A8"><span class="toc-text">附录 1：字体查询条件中各项字体参数及其优先级列表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%84%E5%BD%95-2%EF%BC%9A%E5%90%84%E9%A1%B9%E5%AD%97%E4%BD%93%E5%8F%82%E6%95%B0%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%AF%94%E8%BE%83%E5%87%BD%E6%95%B0"><span class="toc-text">附录 2：各项字体参数的数据类型及比较函数</span></a></li></ul></li></ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">标签</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Linux/">Linux</a>
+                      </li>
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Fonts/">Fonts</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">发现</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-intro/" class="post-title">
+                          
+                            数字化的活字印刷术 (上) - 字体基础知识
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-rendering/" class="post-title">
+                          
+                            数字化的活字印刷术 (下) - 字形渲染
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/08/11/220811-dbus-qtdbus/" class="post-title">
+                          
+                            D-Bus &amp; QtDBus
+                          
+                        </a>
+                        <p class="post-date">2022-08-11</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
