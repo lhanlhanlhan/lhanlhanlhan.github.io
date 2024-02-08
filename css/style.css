@@ -1613,6 +1613,9 @@ mjx-container[jax="SVG"]>svg {
   color: #f5f5f5;
   margin: 8px 0;
 }
+.callout a {
+  color: #f5f5f5;
+}
 table.block-table {
   font-size: 1rem;
   line-height: 1.25;

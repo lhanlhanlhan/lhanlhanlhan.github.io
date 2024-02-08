@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>SFNT 字体包装格式简介 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            技术文档
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          SFNT 字体包装格式简介
+        
+      </div>
+      
+        <div class="post-excerpt">
+          本文介绍了 SFNT 字体文件格式（TrueType 和 OpenType 采用的格式）的内部结构，包括表的定义、基本概念和字体目录表的结构。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-12-30
+        19:17:
+          北京, 中关村
+        
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <div class='callout'><p class='heading'>编者按</p><p class='content'><p>SFNT 包装格式是 Apple 为 TrueType 开发的一种字体文件格式。现在这种格式已经被广泛采用为通用的字体格式标准，除了 TrueType，OpenType、WOFF 也采用这种包装格式。</p>
+<p>操作 SFNT 字体的库是相当丰富和完善的，比如 Google 开发的库 <a target="_blank" rel="noopener" href='https://github.com/rillig/sfntly'>sfntly</a> (支持 Java 和 C++)，这个库在 Chromium 浏览器 中也用作字体相关的处理。</p>
+<p>本文对 SFNT 包装格式的内部结构进行简要说明。</p></p></div>
+
+<p>本文是系列 “<a href="/2022/12/29/221229-font-rendering">数字化的活字印刷术</a>” 的附属文档。本文中或存在一些基本概念需要提前认知，可前往 <a href="/2022/12/29/221229-font-rendering">主文档</a> 中查看详情。</p>
+<h1 id="SFNT-格式文件结构概览"><a href="#SFNT-格式文件结构概览" class="headerlink" title="SFNT 格式文件结构概览"></a>SFNT 格式文件结构概览</h1><p>SFNT 包装格式十分简单，由若干张表（下图中蓝色部分）串联构成，第一张表称为 Font Directory。每张表实际是一个数据块。</p>
+<p><img src="/2022/12/30/221230-font-sfnt/1-sfnt-tables.jpg" alt="SFNT 包装格式的表结构"><span class="figcaption">SFNT 包装格式的表结构</span></p>
+<h1 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h1><h2 id="表-Table"><a href="#表-Table" class="headerlink" title="表 (Table)"></a>表 (Table)</h2><p>SFNT 结构的第一张表名为「Font Directory」，是一张特殊的表，其中记录了字体的基本信息和其他表的信息。<br>除了 Font Directory 外，每张表都有其名字及特定的含义。例如：</p>
+<ul>
+<li>‘head’ 表中记录了字体的全局信息、版本号等元数据；</li>
+<li>‘cmap’表（Character Code Mapping）存储了字符编码（Character Code）到字形（Glyph）的映射关系；</li>
+<li>‘glyf’（Glyph Outline）表是整个字体中最大的表，记录了每个字形（Glyph）的轮廓、指令等数据；</li>
+<li>‘loca’表（Glyph Location）是位置索引，它存储了各个字符相对于 ‘glyf’ 表头的偏移量；</li>
+</ul>
+<p>所有表中的数据都以二进制的方式存储在电脑中，例如 ‘head’ 表在计算机中就是一串二进制数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> fontTools.ttLib <span class="keyword">import</span> TTFont</span><br><span class="line"><span class="comment">#载入字体文件</span></span><br><span class="line">font = TTFont(<span class="string">&quot;simkai.ttf&quot;</span>)</span><br><span class="line"><span class="comment">#&#x27;head&#x27;表的二进制形式</span></span><br><span class="line"><span class="built_in">bin</span>(<span class="built_in">int</span>(font.getTableData(<span class="string">&#x27;head&#x27;</span>).<span class="built_in">hex</span>(), <span class="number">16</span>))</span><br><span class="line"><span class="comment">#&#x27;0b100000000000000000000000000000101000000101000111100001010</span></span><br><span class="line"><span class="comment"># 11001001111010000101101101011111000011110011110011110101000</span></span><br><span class="line"><span class="comment"># 00000000010110000000100000000000000000000000000000000000000</span></span><br><span class="line"><span class="comment"># 00101111000100011001100000101110000000000000000000000000000</span></span><br><span class="line"><span class="comment"># 00000001100000101100011011101010101011111111111111101001111</span></span><br><span class="line"><span class="comment"># 11111101000100000001000010000000000011011100000000000000000</span></span><br><span class="line"><span class="comment"># 00000000000001100000000000000001000000000000000010000000000</span></span><br><span class="line"><span class="comment"># 000000&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>每个表中二进制资料都有其约定的、独特的解析方法。</p>
+<h2 id="字体目录-Font-Directory-表"><a href="#字体目录-Font-Directory-表" class="headerlink" title="字体目录 (Font Directory) 表"></a>字体目录 (Font Directory) 表</h2><p>字体目录表可分为两个部分：Offset Subtable、Table Directory。</p>
+<h3 id="Offset-Subtable"><a href="#Offset-Subtable" class="headerlink" title="Offset Subtable"></a>Offset Subtable</h3><p>此处使用 5 个数字记录了该 SFNT 字体的格式、表的数量，以及一些用于优化搜索速度的字段。</p>
+<table>
+<thead>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">uint32</td>
+<td align="left">SFNT type</td>
+<td align="left">0x74727565（即 ASCII ‘true’）表示 Apple TrueType 格式字体；0x00010000 表示 Microsoft、Adobe 的 TrueType 格式字体；0x4F54544F（即 ASCII ‘OTTO’）表示使用 PostScript 轮廓的 OpenType 字体；……</td>
+</tr>
+<tr>
+<td align="left">uint16</td>
+<td align="left">numTables</td>
+<td align="left">表的数量</td>
+</tr>
+<tr>
+<td align="left">uint16</td>
+<td align="left">searchRange</td>
+<td align="left">用来优化后面表的二分搜索速度：(maximum power of 2 &lt;&#x3D; numTables)*16</td>
+</tr>
+<tr>
+<td align="left">uint16</td>
+<td align="left">entrySelector</td>
+<td align="left">用来优化后面表的二分搜索速度：log2(maximum power of 2 &lt;&#x3D; numTables)</td>
+</tr>
+<tr>
+<td align="left">uint16</td>
+<td align="left">rangeShift</td>
+<td align="left">用来优化后面表的二分搜索速度：numTables*16-searchRange</td>
+</tr>
+</tbody></table>
+<h3 id="Table-Directory"><a href="#Table-Directory" class="headerlink" title="Table Directory"></a>Table Directory</h3><p>此处使用一系列串联的表信息结构体（如下所示），描述每一张表的名字、偏移量、长度等信息。</p>
+<table>
+<thead>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">uint32</td>
+<td align="left">tag</td>
+<td align="left">表的名字，4 个 ASCII 字符构成，如 ‘head’ ‘glyf’ ‘loca’，不足 4 个字符的表名在尾部用空格补齐</td>
+</tr>
+<tr>
+<td align="left">uint32</td>
+<td align="left">checkSum</td>
+<td align="left">表中数据的校验和</td>
+</tr>
+<tr>
+<td align="left">uint32</td>
+<td align="left">offset</td>
+<td align="left">该表的数据在该文件中的偏移量</td>
+</tr>
+<tr>
+<td align="left">uint32</td>
+<td align="left">length</td>
+<td align="left">该表的实际长度（不含补 0）</td>
+</tr>
+</tbody></table>
+<h2 id="字符相关概念"><a href="#字符相关概念" class="headerlink" title="字符相关概念"></a>字符相关概念</h2><ol>
+<li><strong>字符集（Character Set）</strong>定义了一系列支持的字符，如 GB18030 字符集、Big5 字符集、Unicode 字符集。</li>
+<li><strong>字符编码（Character Encoding）</strong>是指将字符编码成数字的编码规则，例如 ASCII 编码、Unicode 编码、Big5 编码、GB18030 编码。<ol>
+<li>旧的西文字体的编码方式可能不是 Unicode，但也有将不是 Unicode 编码的字体转换成 Unicode 字体的方法 [<a target="_blank" rel="noopener" href="https://www.ling.upenn.edu/courses/Spring_2003/ling538/Reencoding/HowTo.html">1</a>]。</li>
+<li>OpenType、TrueType 标准都推荐（should always use）使用 Unicode 编码的字体 [<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/typography/opentype/spec/cmap">2</a>]，以支持跨平台可用。不同平台也支持不同编码方式的字体，如 Windows 就支持 ShiftJIS、Big5 等编码的 SFNT 字体。</li>
+</ol>
+</li>
+<li><strong>码点、码位、内码（Code Point、Code Position）</strong>：字符集中的每一个字符都能通过字符编码对应到一个数字，称为码点。<ol>
+<li>「我」字的 Unicode 码点是「U+6211」，GB18030 码点是「CED2」。</li>
+<li>「A」的 ASCII 码点是 42。</li>
+</ol>
+</li>
+</ol>
+<p><img src="/2022/12/30/221230-font-sfnt/2-code-point-example.png"></p>
+<ol start="4">
+<li><strong>Unicode 名称（Unicode Name）</strong>：Unicode 字符集中的每一个码点都拥有一个字符串「名字」<ol>
+<li>「我」字的 Unicode 名称为「CJK UNIFIED IDEOGRAPH-6211」</li>
+<li>「A」的 Unicode 名称为「LATIN CAPITAL LETTER A」</li>
+</ol>
+</li>
+</ol>
+<h1 id="几张必需表的功能"><a href="#几张必需表的功能" class="headerlink" title="几张必需表的功能"></a>几张必需表的功能</h1><table>
+<thead>
+<tr>
+<th align="left">Tag</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">cmap</td>
+<td align="left">码点对应到 Glyph 的映射表</td>
+</tr>
+<tr>
+<td align="left">glyf</td>
+<td align="left">包含每个 Glyph 的轮廓数据</td>
+</tr>
+<tr>
+<td align="left">head</td>
+<td align="left">表中记录了字体的全局信息，例如版本号等</td>
+</tr>
+<tr>
+<td align="left">hhea</td>
+<td align="left">horizontal header (不知道怎么翻译，避免歧义直接用原文档的术语)</td>
+</tr>
+<tr>
+<td align="left">hmtx</td>
+<td align="left">horizontal metrics (不知道怎么翻译，避免歧义直接用原文档的术语)</td>
+</tr>
+<tr>
+<td align="left">loca</td>
+<td align="left">存储了各个字符相对于 ‘glyf’ 表头的偏移量</td>
+</tr>
+<tr>
+<td align="left">maxp</td>
+<td align="left">记录字体对于内存上的一些需求参数</td>
+</tr>
+<tr>
+<td align="left">name</td>
+<td align="left">包含了人类可读的相关名称数据，比如字体名称等</td>
+</tr>
+<tr>
+<td align="left">post</td>
+<td align="left">PostScript相关数据</td>
+</tr>
+</tbody></table>
+<h2 id="‘head’"><a href="#‘head’" class="headerlink" title="‘head’"></a>‘head’</h2><p>此表是一个结构体，包括但不限于以下基本信息：</p>
+<ul>
+<li>字体版本</li>
+<li>创建时间、修改时间</li>
+<li>Direction hint</li>
+<li>所有字型的 x、y 坐标范围</li>
+</ul>
+<h2 id="选字的过程：’cmap’、’loca’-和-‘glyf’-表"><a href="#选字的过程：’cmap’、’loca’-和-‘glyf’-表" class="headerlink" title="选字的过程：’cmap’、’loca’ 和 ‘glyf’ 表"></a>选字的过程：’cmap’、’loca’ 和 ‘glyf’ 表</h2><p>‘cmap’，’loca’ 和 ‘glyf’ 三张表之间有着映射关系。</p>
+<p>‘glyf’表 (Glyph Outline) 是最大的一张表，包括了每个字形的轮廓、指令等数据；</p>
+<p>‘cmap’表 (Character Code Mapping) 存储的是字符到字形的映射；</p>
+<p>‘loca’表 (Glyph Location) 是位置索引表，它存储了各个字符相对于’glyf’表头的偏移量，’loca’表的存在是为了提升特定字符数据的快速访问速度。</p>
+<p>通常的字符映射方法为：由 ‘cmap’ 表中的映射关系，定位到 ‘loca’ 表中存储的字型偏移量，再由 ‘loca’ 表提供的偏移量定位到 ‘glyf’ 表中的字形中，就能获取到字形。</p>
+<p>例如中易楷体 simkai.ttf 中，简体汉字「马」的字符映射示意图是：</p>
+<p><img src="/2022/12/30/221230-font-sfnt/3-glyph.png"></p>
+<p>在 ‘cmap’ 表中存储了字符 “马” 的 Unicode 码点 uni9A6C 和字形编号 20642 的对应关系，’loca’表负责通过字形编号 20642 查找到字形 “马” 在 ‘glyf’ 表中的具体位置，’glyf’ 表中存储了“马”的字形数据，例如轮廓线条数，边界框坐标等等。</p>
+
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">目录</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#SFNT-%E6%A0%BC%E5%BC%8F%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88"><span class="toc-text">SFNT 格式文件结构概览</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A8-Table"><span class="toc-text">表 (Table)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%97%E4%BD%93%E7%9B%AE%E5%BD%95-Font-Directory-%E8%A1%A8"><span class="toc-text">字体目录 (Font Directory) 表</span></a><ul class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Offset-Subtable"><span class="toc-text">Offset Subtable</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Table-Directory"><span class="toc-text">Table Directory</span></a></li></ul></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5"><span class="toc-text">字符相关概念</span></a></li></ul></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%87%A0%E5%BC%A0%E5%BF%85%E9%9C%80%E8%A1%A8%E7%9A%84%E5%8A%9F%E8%83%BD"><span class="toc-text">几张必需表的功能</span></a><ul class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%80%98head%E2%80%99"><span class="toc-text">‘head’</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%89%E5%AD%97%E7%9A%84%E8%BF%87%E7%A8%8B%EF%BC%9A%E2%80%99cmap%E2%80%99%E3%80%81%E2%80%99loca%E2%80%99-%E5%92%8C-%E2%80%98glyf%E2%80%99-%E8%A1%A8"><span class="toc-text">选字的过程：’cmap’、’loca’ 和 ‘glyf’ 表</span></a></li></ul></li></ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading">标签</div>
+                <div class="body">
+                  <ul class="toc">
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Linux/">Linux</a>
+                      </li>
+                    
+                      <li class="toc-item">
+                        <a href="/tags/Fonts/">Fonts</a>
+                      </li>
+                    
+                  </ul>
+                </div>
+              </div>
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">发现</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-intro/" class="post-title">
+                          
+                            数字化的活字印刷术 (上) - 字体基础知识
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/29/221229-font-rendering/" class="post-title">
+                          
+                            数字化的活字印刷术 (下) - 字形渲染
+                          
+                        </a>
+                        <p class="post-date">2022-12-29</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2022/12/30/221230-font-config/" class="post-title">
+                          
+                            fontconfig 匹配字体过程浅析
+                          
+                        </a>
+                        <p class="post-date">2022-12-30</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
