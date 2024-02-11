@@ -67,7 +67,7 @@
 .posts-area>.footer,
 .pinned-posts>.footer,
 .latest-posts>.footer {
-  padding: 12px;
+  padding: 12px 12px 6px 12px;
 }
 .latest-post-entry .info {
   padding: 12px;

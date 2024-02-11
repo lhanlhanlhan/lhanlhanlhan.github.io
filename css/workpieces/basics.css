@@ -45,3 +45,15 @@ a:not(.hp-a-no-shader):focus>img {
 .mt-1 {
   margin-top: 1em;
 }
+.m-v-half {
+  margin: 0.5em 0;
+}
+.m-v-1 {
+  margin: 1em 0;
+}
+.hp-bold {
+  font-weight: 700;
+}
+.hp-color-secondary {
+  color: $color-text-secondary;
+}
