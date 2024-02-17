@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>SFNT 渲染指令示例 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            随笔
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          SFNT 渲染指令示例
+        
+      </div>
+      
+        <div class="post-excerpt">
+          久经考验的经典字体如 Times New Roman、Helvetica 的字型微调指令都是人肉编写。这样编写出来的指令理论上能渲染出最理想效果。本文从最基本的角度介绍 SFNT 格式中的渲染指令是怎么记录的，以及都能干些什么。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-12-30
+        21:58:
+          中关村, 北京
+        
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <p>TrueType 的 ‘glyf’ 表中，每个字型都有一个 “指令列表”，其中放置与该字体相关的 <strong>渲染指令 (instructions)</strong>。“指令列表” 是一个字节序列，其中每个字节存放的是指令的字节码。</p>
+<p>每个 TrueType 的渲染器中都有 <strong>指令译码器 (interpreter)</strong>。译码器会根据字节码翻译并执行指令，执行诸如沿着某方向移动曲线上的点、对齐点、对点进行插值等操作，以此达到字形微调的目的。</p>
+<p><strong>指令译码器</strong> 还包括一个数据栈 (Stack)、一个寄存器 (Storage)、一个控制值表 (Control Value Table)。</p>
+<ul>
+<li><strong>数据栈</strong>用来存储操作数和返回值。</li>
+<li><strong>寄存器</strong>用来存储希望整个指令执行过程一直都能用的数据。整个指令列表执行结束后，寄存器中的值就无效了。</li>
+<li><strong>控制值表</strong>用来存储一些指令约定可能会读取的内容。</li>
+</ul>
+<p>以下是拉丁字母 ‘i’ 在 <strong>Helvetica.ttc (version &#x3D; 17.0d1e1, 随 macOS 12.5 分发的字体)</strong> 中的字型（Glyph Index &#x3D; 105）的渲染指令及其反汇编内容，以及该指令的解释。</p>
+<ul>
+<li>(c) 1990-2006 Apple Computer Inc. (c) 1981 Linotype AG (c) 1990-91 Type Solutions Inc.</li>
+<li>本文参考了与 TrueType 指令集相关的介绍文档：<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/typography/opentype/spec/tt_instructions">TrueType Instruction Set (OpenType 1.9) - Typography</a></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">字节码</th>
+<th align="left">字节码反汇编的指令或内容</th>
+<th align="left">执行到这句话时将发生的操作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">0x40</td>
+<td align="left">NPUSHB</td>
+<td align="left">将 n 个字节按顺序入栈。将会读取接下来的 1 个字节作为 n。</td>
+</tr>
+<tr>
+<td align="left">0x1C</td>
+<td align="left">28</td>
+<td align="left">上一个指令 (NPUSHB) 的操作数 n。将会读取接下来的 28 个字节。</td>
+</tr>
+<tr>
+<td align="left">0x07</td>
+<td align="left">7</td>
+<td align="left">十进制数字 7</td>
+</tr>
+<tr>
+<td align="left">0xE5</td>
+<td align="left">229</td>
+<td align="left">十进制数字 229</td>
+</tr>
+<tr>
+<td align="left">0x04</td>
+<td align="left">4</td>
+<td align="left">十进制数字 4</td>
+</tr>
+<tr>
+<td align="left">0x00</td>
+<td align="left">0</td>
+<td align="left">十进制数字 0</td>
+</tr>
+<tr>
+<td align="left">0x01</td>
+<td align="left">1</td>
+<td align="left">十进制数字 1</td>
+</tr>
+<tr>
+<td align="left">0x00</td>
+<td align="left">0</td>
+<td align="left">十进制数字 0</td>
+</tr>
+<tr>
+<td align="left">0x06</td>
+<td align="left">6</td>
+<td align="left">十进制数字 6</td>
+</tr>
+<tr>
+<td align="left">0x03</td>
+<td align="left">3</td>
+<td align="left">十进制数字 3</td>
+</tr>
+<tr>
+<td align="left">0x0A</td>
+<td align="left">10</td>
+<td align="left">十进制数字 10</td>
+</tr>
+<tr>
+<td align="left">0x09</td>
+<td align="left">9</td>
+<td align="left">十进制数字 9</td>
+</tr>
+<tr>
+<td align="left">0x17</td>
+<td align="left">23</td>
+<td align="left">十进制数字 23</td>
+</tr>
+<tr>
+<td align="left">0x17</td>
+<td align="left">23</td>
+<td align="left">十进制数字 23</td>
+</tr>
+<tr>
+<td align="left">0x1A</td>
+<td align="left">26</td>
+<td align="left">十进制数字 26</td>
+</tr>
+<tr>
+<td align="left">0x06</td>
+<td align="left">6</td>
+<td align="left">十进制数字 6</td>
+</tr>
+<tr>
+<td align="left">0x01</td>
+<td align="left">1</td>
+<td align="left">十进制数字 1</td>
+</tr>
+<tr>
+<td align="left">0x02</td>
+<td align="left">2</td>
+<td align="left">十进制数字 2</td>
+</tr>
+<tr>
+<td align="left">0x29</td>
+<td align="left">41</td>
+<td align="left">十进制数字 41</td>
+</tr>
+<tr>
+<td align="left">0x07</td>
+<td align="left">7</td>
+<td align="left">十进制数字 7</td>
+</tr>
+<tr>
+<td align="left">0x03</td>
+<td align="left">3</td>
+<td align="left">十进制数字 3</td>
+</tr>
+<tr>
+<td align="left">0x00</td>
+<td align="left">0</td>
+<td align="left">十进制数字 0</td>
+</tr>
+<tr>
+<td align="left">0x19</td>
+<td align="left">25</td>
+<td align="left">十进制数字 25</td>
+</tr>
+<tr>
+<td align="left">0x08</td>
+<td align="left">8</td>
+<td align="left">十进制数字 8</td>
+</tr>
+<tr>
+<td align="left">0x09</td>
+<td align="left">9</td>
+<td align="left">十进制数字 9</td>
+</tr>
+<tr>
+<td align="left">0xAA</td>
+<td align="left">170</td>
+<td align="left">十进制数字 170</td>
+</tr>
+<tr>
+<td align="left">0x21</td>
+<td align="left">33</td>
+<td align="left">十进制数字 33</td>
+</tr>
+<tr>
+<td align="left">0x62</td>
+<td align="left">98</td>
+<td align="left">十进制数字 98</td>
+</tr>
+<tr>
+<td align="left">0x42</td>
+<td align="left">66</td>
+<td align="left">十进制数字 66</td>
+</tr>
+<tr>
+<td align="left">0x18</td>
+<td align="left">24</td>
+<td align="left">十进制数字 24</td>
+</tr>
+<tr>
+<td align="left">0x2B</td>
+<td align="left">CALL</td>
+<td align="left">弹出当前栈顶数字，执行已定义的 ID 为该栈顶数字函数。<br/>- 注：函数需使用 FDEF[] 指令来定义。</td>
+</tr>
+<tr>
+<td align="left">0x2B</td>
+<td align="left">CALL</td>
+<td align="left">弹出当前栈顶数字，执行已定义的 ID 为该栈顶数字函数。<br/>- 注：函数需使用 FDEF[] 指令来定义。</td>
+</tr>
+<tr>
+<td align="left">0x4E</td>
+<td align="left">FLIPOFF</td>
+<td align="left">设置 Graphics State 中的 auto_flip 属性为 FALSE。</td>
+</tr>
+<tr>
+<td align="left">0xF4</td>
+<td align="left">MIRP[rp0,rnd,grey]</td>
+<td align="left">Move Indirect Relative Point：MIRP 指令可以根据多种条件保留两点之间的距离。</td>
+</tr>
+<tr>
+<td align="left">0x3C</td>
+<td align="left">ALIGNRP</td>
+<td align="left">Align Relative Point：将 rp0 和点 p 之间的距离减小为零，以对齐两点。</td>
+</tr>
+<tr>
+<td align="left">0x4D</td>
+<td align="left">FLIPON</td>
+<td align="left">设置 Graphics State 中的 auto_flip 属性为 TRUE。</td>
+</tr>
+<tr>
+<td align="left">0xC4</td>
+<td align="left">MDRP[rnd,grey]</td>
+<td align="left">Move Direct Relative Point：MDRP 通常用于使用来自原始轮廓的值来控制字形特征的宽度或高度。</td>
+</tr>
+<tr>
+<td align="left">0xFD</td>
+<td align="left">MIRP[rp0,min,rnd,black]</td>
+<td align="left">Move Indirect Relative Point：MIRP 指令可以根据多种条件保留两点之间的距离</td>
+</tr>
+<tr>
+<td align="left">0x3C</td>
+<td align="left">ALIGNRP</td>
+<td align="left">Align Relative Point：将 rp0 和点 p 之间的距离减小为零，以对齐两点。</td>
+</tr>
+<tr>
+<td align="left">0xC4</td>
+<td align="left">MDRP[rnd,grey]</td>
+<td align="left">Move Direct Relative Point：MDRP 通常用于使用来自原始轮廓的值来控制字形特征的宽度或高度。</td>
+</tr>
+<tr>
+<td align="left">0x4E</td>
+<td align="left">FLIPOFF</td>
+<td align="left">设置 Graphics State 中的 auto_flip 属性为 FALSE。</td>
+</tr>
+<tr>
+<td align="left">0x45</td>
+<td align="left">RCVT</td>
+<td align="left">Read Control Value Table<br/>- 从栈中弹出 1 个值 location，然后读取 CVT[location] 的值放入栈。<br/>- CVT &#x3D; Control Value Table</td>
+</tr>
+<tr>
+<td align="left">0x65</td>
+<td align="left">NEG</td>
+<td align="left">从栈中弹出 1 个值 n，然后将 -n 放入栈。</td>
+</tr>
+<tr>
+<td align="left">0x44</td>
+<td align="left">WCVTP</td>
+<td align="left">Write Control Value Table in Pixel units<br/>- 从栈中弹出 1 个值 value<br/>- 从栈中弹出 1 个值 location<br/>- 然后将 CVT[location] 的值设为 value 的 26.6 定点数格式。</td>
+</tr>
+<tr>
+<td align="left">0xE6</td>
+<td align="left">MIRP[rnd,white]</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">0x00</td>
+<td align="left">SVTCA[y-axis]</td>
+<td align="left">Set freedom and projection Vectors To Coordinate Axis</td>
+</tr>
+<tr>
+<td align="left">0x3F</td>
+<td align="left">MIAP[rnd]</td>
+<td align="left">Move Indirect Absolute Point：<br/>- 从栈中弹出 1 个值 location<br/>- 从栈中弹出 1 个值 p<br/>- 将点 p 沿着 projection_vector 移动到 CVT[location] 定义的位置上。</td>
+</tr>
+<tr>
+<td align="left">0x3F</td>
+<td align="left">MIAP[rnd]</td>
+<td align="left">Move Indirect Absolute Point：<br/>- 从栈中弹出 1 个值 location<br/>- 从栈中弹出 1 个值 p<br/>- 将点 p 沿着 projection_vector 移动到 CVT[location] 定义的位置上。</td>
+</tr>
+<tr>
+<td align="left">0x3C</td>
+<td align="left">ALIGNRP</td>
+<td align="left">Align Relative Point：将 rp0 和点 p 之间的距离减小为零，以对齐两点。</td>
+</tr>
+<tr>
+<td align="left">0x3F</td>
+<td align="left">MIAP[rnd]</td>
+<td align="left">Move Indirect Absolute Point：<br/>- 从栈中弹出 1 个值 location<br/>- 从栈中弹出 1 个值 p<br/>- 将点 p 沿着 projection_vector 移动到 CVT[location] 定义的位置上。</td>
+</tr>
+<tr>
+<td align="left">0x4D</td>
+<td align="left">FLIPON</td>
+<td align="left">设置 Graphics State 中的 auto_flip 属性为 TRUE。</td>
+</tr>
+<tr>
+<td align="left">0xED</td>
+<td align="left">MIRP[min,rnd,black]</td>
+<td align="left">Move Indirect Relative Point：MIRP 指令可以根据多种条件保留两点之间的距离</td>
+</tr>
+<tr>
+<td align="left">0x31</td>
+<td align="left">IUP[x]</td>
+<td align="left">Interpolate Untouched Points through the outline<br/>- 在每个轮廓上，对任何两个已被移动过的点 (a, b) 之间的每个未移动的点 n，按照以下规则进行移动。 <br/>- 如果点 n 的 x 坐标位于 (a, b) 移动之前的 x 坐标之间，则把 n 放在 (a, b) 的新 x 坐标之间线性插值的地方。<br/>- 否则按照与 n 最近的那个已被移动的点在 x 上已移动的距离，在 x 方向移动点 n。</td>
+</tr>
+<tr>
+<td align="left">0x30</td>
+<td align="left">IUP[y]</td>
+<td align="left">Interpolate Untouched Points through the outline<br/>- 在每个轮廓上，对任何两个已被移动过的点 (a, b) 之间的每个未移动的点 n，按照以下规则进行移动。 <br/>- 如果点 n 的 y 坐标位于 (a, b) 移动之前的 y 坐标之间，则把 n 放在 (a, b) 的新 y 坐标之间线性插值的地方。<br/>- 否则按照与 n 最近的那个已被移动的点在 y 上已移动的距离，在 y 方向移动点 n。</td>
+</tr>
+</tbody></table>
+
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+
+            
+            
+              
+                <div class="hp-pane post-toc-pane">
+                <div class="heading active alternative">《数字化的活字印刷术》专栏</div>
+                <div class="body active alternative">
+                  <div class="body-block">
+
+                    <span class="hp-color-secondary">近期对 Linux 系统通用的文本显示流程进行了一些梳理，积累一些与文字渲染相关的知识基础。</span>
+                    
+                    <a href="/series/221229-series-fonts.html">
+                      更多...
+                    </a>
+                  </div>
+                  
+                  <div class="h-line-third mt-1"></div>
+                  
+
+<div class="post-list">
+  
+  
+  
+    <div class="post-list-item">
+      <a href="/2022/12/29/221229-font-intro/" class="post-title">
+        
+          字体 - 基础知识
+        
+      </a>
+      <p class="post-date">2022-12-29</p>
+    </div>
+  
+    <div class="post-list-item">
+      <a href="/2022/12/29/221229-font-rendering/" class="post-title">
+        
+          字形渲染的一般过程 (GNU/Linux)
+        
+      </a>
+      <p class="post-date">2022-12-29</p>
+    </div>
+  
+  
+  
+    <div class="h-line-third h-line-thick-third m-v-1"></div>
+    <div class="m-v-half">
+      <a href="/series/221229-series-fonts.html">
+        查看本专栏其他文章...
+      </a>
+    </div>
+  
+</div>
+</div>
+                </div>
+              
+            
+
+            
+
+            
+
+            
+              <div class="hp-pane">
+                <div class="heading">发现</div>
+                <div class="body">
+                  <div class="post-list">
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/03/18/230318-the-prologue/" class="post-title">
+                          
+                            The Prologue
+                          
+                        </a>
+                        <p class="post-date">2023-03-18</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/06/03/230603-knowledge-migration/" class="post-title">
+                          
+                            蚂蚁搬家进行中
+                          
+                        </a>
+                        <p class="post-date">2023-06-03</p>
+                      </div>
+                    
+                      <div class="post-list-item">
+                        <a href="/2023/07/15/230715-gene-test/" class="post-title">
+                          
+                            Scientific Fortune-telling: An Experience to Genetic Analysis
+                          
+                        </a>
+                        <p class="post-date">2023-07-15</p>
+                      </div>
+                    
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
