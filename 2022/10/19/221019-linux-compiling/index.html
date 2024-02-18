@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN,en-UK,default">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Han Li">
+
+
+    <meta name="subtitle" content="In miracles I trust">
+
+
+
+
+
+
+<title>Linux 可执行文件编译、链接及执行过程浅析 | Han Li&#39;s Blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+<style>
+    
+</style>
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    
+    <script type="text/javascript" src="/js/format.js"></script>
+    
+    <script type="text/javascript" src="/js/menu.js"></script>
+    
+    <script type="text/javascript" src="/js/util.js"></script>
+    
+    <script type="text/javascript" src="/js/pageview.js"></script>
+    
+    <script type="text/javascript" src="/js/partials/pv.js"></script>
+    
+
+
+
+
+
+
+
+
+
+
+  <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head>
+  <body>
+    <div class="wrapper">
+
+      <div class="header">
+  <div class="flex-container">
+    <div class="header-inner">
+      <span class="site-brand-container">
+        <a href="/" class="the-han-li-logo">
+          | Blog
+        </a>
+      </span>
+      <div id="menu-btn" class="menu-btn" onclick="toggleMenu()">
+        菜单
+      </div>
+      <nav class="site-nav">
+        <ul class="menu-list">
+          
+          
+          
+          
+          
+
+          
+          
+            
+              <li class="menu-item">
+                <a href="/">主页</a>
+              </li> 
+            
+          
+             
+              <li class="menu-item menu-item-active">
+                <a href="/browse/">速览</a>
+              </li> 
+            
+          
+            
+              <li class="menu-item">
+                <a href="/about/">关于</a>
+              </li> 
+            
+          
+          
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main">
+        <div class="flex-container">
+          
+
+
+<article id="post">
+  
+    
+
+<div class="post-head">
+  <div class="hp-grid-row post-info-line">
+    <div class="post-info hp-grid-col-two-third row-elem">
+      
+
+      
+        
+
+        <div class="post-cats hp-tag-list">
+          <div class="hp-tag">
+            技术文档
+          </div>
+        </div>
+      
+
+      <div class="post-title">
+        
+          Linux 可执行文件编译、链接及执行过程浅析
+        
+      </div>
+      
+        <div class="post-excerpt">
+          在最近开发过程中，对二进制文件在 Linux 系统上执行的原理产生了兴趣。本文主要以一个动态链接的 C++ 程序的执行过程为主线，介绍动态链接、ELF 文件等概念，简要地揭示了程序在 Linux 系统上的运行及执行过程。
+        </div>
+      
+
+      
+      <div class="post-time-loc">
+        2022-10-19
+        20:07:
+          西土城路, 海淀区, 北京
+        
+      </div>
+    </div>
+
+    
+  </div>
+  
+  <div class="h-line-third"></div>
+</div>
+
+    <div class="hp-grid-row post-page">
+      
+      
+      
+
+      
+
+      
+      
+        <div class="hp-grid-col-two-third row-elem">
+      
+        <div class="post-content">
+          
+
+  <div class='callout'><p class='heading'></p><p class='content'>本文属于学习笔记，内容或为半成品或存在较多谬误，仅供参考。</p></div>
+
+<p>Linux 系统上的可执行文件，分为 <strong>静态链接</strong> 的可执行文件及 <strong>动态链接</strong> 的可执行文件。</p>
+<ul>
+<li><strong>静态链接</strong> 的可执行文件：这类程序在执行时，不会载入任何动态库，而是直接执行其底下对应的汇编代码，不会走 Loader 等高级语言编译产物的标准过程。这类静态链接可执行文件，现已不多见。</li>
+<li><strong>动态链接</strong> 的可执行文件：只要是由高级语言编译出来的程序，一般都是 <strong>动态链接</strong> 的可执行文件，这是因为：高级语言编译出来的程序一般需要标准库的支持 (如 libc)，这些标准库在系统上以动态库形式提供。</li>
+</ul>
+<h1 id="链接器-Linkers"><a href="#链接器-Linkers" class="headerlink" title="链接器 (Linkers)"></a>链接器 (Linkers)</h1><p>链接就是将可执行文件与库文件绑定在一起的过程。这种绑定由专门的程序负责，叫做 “链接器 (Linker)”。</p>
+<p>Linux 提供了两种 Linker。他们的行为和作用不同，有一定合作关系，不应混淆。</p>
+<ul>
+<li><strong>ld 链接器</strong>：在编译时（compile-time）由编译器执行。<ul>
+<li>编译的时候 gcc、clang 等编译器会执行 ld，并给它传递一系列链接参数，比如指定需要链接什么库。</li>
+<li>链接时，ld 通常按照一定顺序查找需要链接的静态／动态库：<ol>
+<li>ld 运行参数 <code>L</code> 指定的库路径；</li>
+<li>环境变量 <code>LIBRARY_PATH</code> 指定的库搜索路径；</li>
+<li>默认库搜索路径：&#x2F;lib&#x2F; 及 &#x2F;usr&#x2F;lib&#x2F;</li>
+</ol>
+</li>
+<li>ld 的可执行文件通常在 <code>/usr/bin/ld</code>。</li>
+</ul>
+</li>
+<li><strong>ld.so 链接器</strong>：在程序运行时（run-time）按需自动执行。<ul>
+<li>ld.so 是动态链接器&#x2F;加载器。如果可执行文件内有链接到指定的库的需求，那么程序运行的时候会调用 ld.so 根据指定的路径去加载指定的库。</li>
+<li>ld.so 看名字虽然像一个 so 库，但它是 <strong>可执行的</strong>。在 GNU&#x2F;Linux 发行版系统上，ld.so 可执行文件通常在 <code>/usr/lib/x86_64-linux-gnu/ld-[version].so</code>。</li>
+</ul>
+</li>
+</ul>
+<div class='callout'><p class='heading'></p><p class='content'>一句话概括他俩的区别：<b>ld 链接器</b> 用于将静态库嵌入可执行文件，并将运行时依赖的动态库文件路经记录在可执行文件中；<b>ld.so 链接器</b> 用于在 <u>运行时</u> 加载可执行文件依赖的动态库。</p></div>
+
+<h1 id="一个动态链接的-C-程序的执行过程"><a href="#一个动态链接的-C-程序的执行过程" class="headerlink" title="一个动态链接的 C++ 程序的执行过程"></a>一个动态链接的 C++ 程序的执行过程</h1><p>动态链接和静态链接程序执行过程有一定的区别。例如，动态链接的程序必须具有 interpreter &#x2F; loader，而静态程序则不必。</p>
+<p>为什么这里以动态链接的 C++ 程序为例？因为我们使用 C++ 编写出来的程序，只要是有 main() 函数的，就一定动态链接了标准 C 库（libc.so）。因此属于动态链接的程序。</p>
+<p><img src="/2022/10/19/221019-linux-compiling/1-dyn-cpp.jpg"></p>
+<p>执行细节（步骤 1 - 11）：</p>
+<ol>
+<li><p>首先，当你执行一个程序的时候，比如这个程序名为 app：</p>
+<ol>
+<li>你会在 shell 中输入：<code>./app</code></li>
+<li>shell 会 fork 一个子进程出来，并将该程序 <strong>mmap</strong> 到内存中；然后，它会执行 Linux 系统调用 <code>execve()</code> (见后面介绍)。调用之后，系统会在这个子进程中为运行这个程式设置栈，并且将 argc，argv 和 envp 压入栈中；</li>
+<li><code>execve()</code> 会扫描程序的 <strong>ELF 头</strong>，检查其是否是合格的 ELF 文件格式，检查其所属的 ELF 种类，并从 <strong>.interp section</strong> 中找到该二进制程序的 <strong>interpreter &#x2F; loader</strong>。一般而言，如果在 link 的时候未有指定，那么程序的默认 interpreter&#x2F;loader 是 <code>/usr/lib/ld-[version].so</code>，简称 <code>ld.so</code>。</li>
+</ol>
+</li>
+<li><p>找到 <code>ld.so</code> 后，系统先将 ld.so <strong>mmap</strong> 到内存中，并将指令指针改成 <code>ld.so</code> 的 <strong>入口地址</strong>，然后切换回用户态，执行 ld.so 内部的代码。</p>
+</li>
+<li><p>ld.so 的主要功能及工序是：</p>
+<ol>
+<li><p>载入 ELF 文件 .dynamic section 的 <code>DT_NEEDED</code> 记录的程序所使用的共享库（如 libgcc.so）。</p>
+<ul>
+<li>这个 .dynamic section 的内容可通过 readelf 或 ldd 命令查看（可看后文介绍：怎么查看 ELF 文件中的某个 section？怎么样查看 ELF 可执行程序／库的所有依赖项目（如 so 文件）？）</li>
+<li>加载过程是递归的，即加载某个共享库所依赖的其他共享库的时候其实也是由对应的 loader (一般也是 ld.so) 来完成的</li>
+</ul>
+</li>
+<li><p>初始化 GOT 表</p>
+</li>
+<li><p>将共享库的 symbol table 合并到 global symbol table</p>
+</li>
+<li><p>启动应用程序</p>
+<ul>
+<li>当 DT_NEEDED 所记录的所有依赖的共享库加载完毕后，ld.so 会进行一些其他初始化（太复杂了… TODO）</li>
+<li>所有初始化完毕后，ld.so 的启动例程会 <code>jmp</code> 回到程序原本的入口点。入口点的地址由 Linker 记录在 ELF 头中：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(base) han@han-dell:~$ readelf -h ./app | grep Entry</span><br><span class="line">Entry point address:0x4010c0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果不在 ld 时显式指定（比如使用 ld -e _begin 可以记录使用 _begin 作为入口点），入口点默认是 <code>_start</code> 符号所对应的地址。</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p><code>_start</code>：应用程序真正的入口点</p>
+<ol>
+<li>系统默认从程序的 _start 开始执行。事实上，使用 C&#x2F;C++ 编写及编译的程序，_start 是已经被 C 标准库实现的例程，使用者不必手动实现它。</li>
+<li>_start 例程的实现在 &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;crt1.o （C Runtime）中提供。大多数平台上，_start 是使用 x86 汇编书写的程序 (可查看源码)</li>
+</ol>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(base) han@han-bd-dell:~$ nm /usr/lib/x86_64-linux-gnu/crt1.o</span><br><span class="line">0000000000000000 D __data_start</span><br><span class="line">0000000000000000 W data_start</span><br><span class="line">0000000000000030 T _dl_relocate_static_pie</span><br><span class="line">                U _GLOBAL_OFFSET_TABLE_</span><br><span class="line">0000000000000000 R _IO_stdin_used</span><br><span class="line">                U __libc_csu_fini</span><br><span class="line">                U __libc_csu_init</span><br><span class="line">                U __libc_start_main</span><br><span class="line">                U main</span><br><span class="line">0000000000000000T _start</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>由用户自行提供应用程序的入口点也是可行的。在编译时加入参数 -nostdlib -nostdinc，可以不将 C 标准库链入程序，这样用户就可以自己定义 _start 函数了。</li>
+<li>由代码可见，标准 C 库的_start 除了能够调用 libc.so 中的 __libc_start_main 来执行用户定义的 main() 函数之外，还会<ul>
+<li>做一些底层的初始化，如准备寄存器，准备 Cache、MMU，确保程序执行符合 ABI。</li>
+<li>初始化 C Runtime</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p><code>__libc_start_main</code>：由 _start 调用并由标准 C 库提供，主要初始化 C 程序的运行环境（_init()），并执行那些在 main 开始之前／结束之后要完成的过程，例如：</p>
+<ol>
+<li>程序级构造函数、析构函数</li>
+<li>初始化在 .rss section 中记录的尚未初始化的变量，例如一些静态变量及一些全局作用域的变量。</li>
+<li>上述各种构造过程会被添加到一个 array 中，由 __libc_csu_init 函数真正执行初始化。</li>
+</ol>
+</li>
+<li><p><code>__libc_csu_init</code>：初始化 C 运行环境并执行 init array 中的构造子：</p>
+<ol>
+<li>由 __libc_csu_init 的代码 可知，该函数主要 执行 _init ()，并 loop 一个 init array，挨个执行其中的函数。</li>
+<li>init array 中的过程由编译器提供，视乎编译器的不同具有各种命名及实现。例如在 gcc 中，这种初始化过程可命名为 ___cxx_global_var_init。</li>
+</ol>
+</li>
+<li><p><code>_init</code>：由 __libc_csu_init 执行</p>
+</li>
+<li><p><code>__GLOBAL_sub_I_xxx</code> 构造子：由 __libc_csu_init 执行，用于初始化全局作用域变量</p>
+</li>
+<li><p><code>___cxx_global_var_init</code>：由 __GLOBAL_sub_I_xxx 执行，是 clang 生成的全局变量初始化函数</p>
+</li>
+<li><p><code> __attribute__((constructor))</code> 类型的构造子：由 __libc_csu_init 执行，是程序级构造函数、析构函数</p>
+</li>
+<li><p>（此处省略了一大堆其他初始化过程）__libc_csu_init 结束执行后，由 __libc_start_main 执行 main() 函数。main 函数的返回值直接传入 exit() 函数中，跳回 _start 例程来处理。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exit</span>(<span class="built_in">main</span>(argc, argv));</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://lwn.net/Articles/631631/">How programs get run: ELF binaries</a></li>
+<li><a target="_blank" rel="noopener" href="https://akaedu.github.io/book/ch19s02.html#asmc.main">2. main函数和启动例程</a></li>
+<li><a target="_blank" rel="noopener" href="https://embeddedartistry.com/blog/2019/04/08/a-general-overview-of-what-happens-before-main/">A General Overview of What Happens Before main() - Embedded Artistry</a></li>
+<li><a target="_blank" rel="noopener" href="https://oneraynyday.github.io/dev/2020/05/03/Analyzing-The-Simplest-C++-Program/#recap-2">Analyzing The Simplest C++ Program</a></li>
+<li><a target="_blank" rel="noopener" href="https://ctf-wiki.org/executable/elf/running-overview/#search_binary_handler">程序执行流程 - CTF Wiki</a></li>
+<li><a target="_blank" rel="noopener" href="https://luomuxiaoxiao.com/?p=516">Linux X86 程序启动 – main函数是如何被执行的？ – 落木萧萧的博客</a></li>
+</ul>
+<h1 id="Tricks"><a href="#Tricks" class="headerlink" title="Tricks"></a>Tricks</h1><h3 id="怎么查看-ELF-文件中的某个-section？"><a href="#怎么查看-ELF-文件中的某个-section？" class="headerlink" title="怎么查看 ELF 文件中的某个 section？"></a>怎么查看 ELF 文件中的某个 section？</h3><p>   使用 <code>readelf</code> 命令。例如，想要查看 .dynamic section，可使用 “readelf -d .&#x2F;app”</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(base) han@han-bd-dell:~$ readelf -d ./app</span><br><span class="line"></span><br><span class="line">Dynamic section at offset 0x2e00 contains 26 entries:</span><br><span class="line">  Tag        Type                         Name/Value</span><br><span class="line">  0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]</span><br><span class="line">  0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]</span><br><span class="line">  0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]</span><br><span class="line">  0x000000000000000c (INIT)               0x401000</span><br><span class="line">  0x000000000000000d (FINI)               0x401488</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="怎么样查看-ELF-可执行程序／库的所有依赖项目（如-so-文件）？"><a href="#怎么样查看-ELF-可执行程序／库的所有依赖项目（如-so-文件）？" class="headerlink" title="怎么样查看 ELF 可执行程序／库的所有依赖项目（如 so 文件）？"></a>怎么样查看 ELF 可执行程序／库的所有依赖项目（如 so 文件）？</h3><p>ldd [app&#x2F;lib name] – 可获取程序&#x2F;库所需的【所有】依赖</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(base) han@han-bd-dell:~<span class="variable">$ldd</span> ./app</span><br><span class="line">        linux-vdso.so.1 (0x00007ffe4478e000)</span><br><span class="line">        libstdc++.so.6 =&gt; /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007fa94d5b4000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007fa94d599000)</span><br><span class="line">        libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007fa94d3a7000)</span><br><span class="line">        libm.so.6 =&gt; /lib/x86_64-linux-gnu/libm.so.6 (0x00007fa94d258000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x00007fa94d7b3000)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="我怎么在-main-函数执行之前及之后执行我的函数？"><a href="#我怎么在-main-函数执行之前及之后执行我的函数？" class="headerlink" title="我怎么在 main() 函数执行之前及之后执行我的函数？"></a>我怎么在 main() 函数执行之前及之后执行我的函数？</h3><p><strong>方式 1：</strong> 利用静态构造／析构在 main() 之外的特性：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> &#123;</span><br><span class="line">  <span class="comment">// WIP</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>方式 2：</strong> 利用程序级构造、析构函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__ ((constructor)) <span class="built_in">construct_one</span>(<span class="type">int</span> argc,<span class="type">char</span>* argv[]) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;111\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__ ((constructor)) <span class="built_in">construct_two</span>(<span class="type">int</span> argc,<span class="type">char</span>* argv[],<span class="type">char</span>* envp[]) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;222\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__ ((destructor)) <span class="built_in">destruct_one</span>(<span class="type">int</span> argc,<span class="type">char</span>* argv[]) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;333\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__ ((destructor)) <span class="built_in">destruct_two</span>(<span class="type">int</span> argc,<span class="type">char</span>* argv[]) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;444\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc,<span class="type">char</span> *argv[],<span class="type">char</span> *env[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;555\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* output:</span></span><br><span class="line"><span class="comment">111</span></span><br><span class="line"><span class="comment">222</span></span><br><span class="line"><span class="comment">555</span></span><br><span class="line"><span class="comment">444</span></span><br><span class="line"><span class="comment">333</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="什么是-execve-系统调用？"><a href="#什么是-execve-系统调用？" class="headerlink" title="什么是 execve 系统调用？"></a>什么是 execve 系统调用？</h3><p>先上源码吧：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">execve</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *pathname, <span class="type">char</span> *<span class="type">const</span> argv[],</span></span><br><span class="line"><span class="params">           <span class="type">char</span> *<span class="type">const</span> envp[])</span>;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>函数定义：<a target="_blank" rel="noopener" href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/exec.c#n2087">https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/exec.c#n2087</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SYSCALL_DEFINE3(execve,</span><br><span class="line">                <span class="type">const</span> <span class="type">char</span> __user *, filename,</span><br><span class="line">                <span class="type">const</span> <span class="type">char</span> __user *<span class="type">const</span> __user *, argv,</span><br><span class="line">                <span class="type">const</span> <span class="type">char</span> __user *<span class="type">const</span> __user *, envp)</span><br><span class="line">&#123;</span><br><span class="line">        returndo_execve(getname(filename), argv, envp);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>可见，execve 系统调用直接调用了 do_execve</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">do_execve</span><span class="params">(<span class="keyword">struct</span> filename *filename,</span></span><br><span class="line"><span class="params">        <span class="type">const</span> <span class="type">char</span> __user *<span class="type">const</span> __user *__argv,</span></span><br><span class="line"><span class="params">        <span class="type">const</span> <span class="type">char</span> __user *<span class="type">const</span> __user *__envp)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">user_arg_ptr</span> <span class="title">argv</span> =</span> &#123; .ptr.native = __argv &#125;;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">user_arg_ptr</span> <span class="title">envp</span> =</span> &#123; .ptr.native = __envp &#125;;</span><br><span class="line">        <span class="keyword">return</span> do_execveat_common(AT_FDCWD, filename, argv, envp, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>do_execveat_common &#x3D;&gt; bprm_execve</strong></li>
+<li>bprm_execve &#x3D;&gt; exec_binprm</li>
+<li>exec_binprm &#x3D;&gt; search_binary_handler<ul>
+<li>主要辨识当前二进制文件所属类型，然后寻找支持处理该二进制类型的可执行程序处理过程。</li>
+</ul>
+</li>
+<li>search_binary_handler &#x3D;&gt; load_elf_binary<ul>
+<li>辨识到 Binary 属于 <strong>ELF 格式</strong> 后，使用 load_elf_binary 过程来处理该二进制文件。</li>
+</ul>
+</li>
+</ul>
+<p>load_elf_binary 主要流程：</p>
+<ul>
+<li>检查并获取 ELF 文件的头部信息。<ul>
+<li>如果目标文件采用动态链接，则使用头中的 <code>.interp</code> section 来确定 <code>loader</code> 的路径。</li>
+</ul>
+</li>
+<li>将 program header 中记录的相应的 <strong>segment</strong> 映射到内存中。program header 中有以下重要信息<ul>
+<li>每一个 segment 需要映射到的地址</li>
+<li>每一个 segment 相应的权限。</li>
+<li>记录哪些 section 属于哪些 segment。</li>
+</ul>
+</li>
+</ul>
+
+
+        </div>
+
+        
+          <div class="after-post">
+            
+          </div>
+        
+
+        <div class="post-footer">
+  
+    <!-- Back to top -->
+    <a href="#">返回顶部</a>
+  
+
+  <!-- TODO -- uncomment when it's done -->
+  
+</div>
+
+      </div>
+
+      
+      
+        <div class="hp-grid-col-one-third row-elem">
+          <div class="post-info-col">
+            <div class="h-line-primary big-screen-hidden" style="margin-bottom: 24px;"></div>
+
+            
+            
+
+            
+              <div class="hp-pane post-toc-pane">
+                <div class="heading active">目录</div>
+                <div class="body active">
+                  <ul class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E5%99%A8-Linkers"><span class="toc-text">链接器 (Linkers)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E7%9A%84-C-%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="toc-text">一个动态链接的 C++ 程序的执行过程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tricks"><span class="toc-text">Tricks</span></a><ul class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%8E%E4%B9%88%E6%9F%A5%E7%9C%8B-ELF-%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E6%9F%90%E4%B8%AA-section%EF%BC%9F"><span class="toc-text">怎么查看 ELF 文件中的某个 section？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%8E%E4%B9%88%E6%A0%B7%E6%9F%A5%E7%9C%8B-ELF-%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F%EF%BC%8F%E5%BA%93%E7%9A%84%E6%89%80%E6%9C%89%E4%BE%9D%E8%B5%96%E9%A1%B9%E7%9B%AE%EF%BC%88%E5%A6%82-so-%E6%96%87%E4%BB%B6%EF%BC%89%EF%BC%9F"><span class="toc-text">怎么样查看 ELF 可执行程序／库的所有依赖项目（如 so 文件）？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%91%E6%80%8E%E4%B9%88%E5%9C%A8-main-%E5%87%BD%E6%95%B0%E6%89%A7%E8%A1%8C%E4%B9%8B%E5%89%8D%E5%8F%8A%E4%B9%8B%E5%90%8E%E6%89%A7%E8%A1%8C%E6%88%91%E7%9A%84%E5%87%BD%E6%95%B0%EF%BC%9F"><span class="toc-text">我怎么在 main() 函数执行之前及之后执行我的函数？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-execve-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%EF%BC%9F"><span class="toc-text">什么是 execve 系统调用？</span></a></li></ul></li></ul></li></ul>
+                </div>
+              </div>
+            
+
+            
+
+            
+          </div>
+        </div>
+      
+    </div>
+  
+</article>
+
+<div class="hp-imgpreview" hidden>
+  <a href="">
+    <img class="prev-img"></img>
+  </a>
+</div>
+
+<script>
+  window.onload = detectors();
+</script>
+        </div>
+      </div>
+      
+      <div class="footer">
+  <div class="flex-container">
+    <div class="footer-text">
+       
+      <div class="logo">
+        <span class="the-han-li-logo"></span>
+        <img src="/images/cc-by.svg">
+      </div>
+      <div class="copyright">
+        除另有说明的地方以外，本站所分发的内容遵循
+<a target="_blank" rel="noopener" href='https://creativecommons.org/licenses/by/4.0/legalcode'>CC-BY International v4.0 协议</a>。
+
+        <a href="/about/copyright">了解更多...</a>
+      </div>
+    </div>
+
+    <div class="rel-links">
+      <span><a target="_blank" rel="noopener" href="https://reionwong.life">Reion's Think</a></span>
+      <span><a target="_blank" rel="noopener" href="https://juejin.cn/user/4309694831660711">Nayuta</a></span>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    
+
+  </body>
+</html>
